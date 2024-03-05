@@ -7,7 +7,7 @@ import (
 )
 
 // Beacon Node interface
-type IBeaconNode interface {
+type IBeaconClient interface {
 	GetSyncStatus(ctx context.Context) (SyncStatus, error)
 	GetEth2Config(ctx context.Context) (Eth2Config, error)
 	GetEth2DepositContract(ctx context.Context) (Eth2DepositContract, error)

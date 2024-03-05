@@ -1,17 +1,14 @@
-package node
+package services
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"
-	"github.com/mitchellh/go-homedir"
-	"github.com/nodeset-org/hyperdrive/daemon-utils/services"
-	"github.com/nodeset-org/hyperdrive/shared/config"
-	"github.com/nodeset-org/hyperdrive/shared/utils"
+	"github.com/rocket-pool/node-manager-core/config"
 	"github.com/rocket-pool/node-manager-core/eth"
 	"github.com/rocket-pool/node-manager-core/node/wallet"
 	"github.com/rocket-pool/node-manager-core/utils/log"
@@ -25,63 +22,47 @@ const (
 // A container for all of the various services used by Hyperdrive
 type ServiceProvider struct {
 	// Services
-	cfg        *config.HyperdriveConfig
+	cfg        config.IConfig
+	resources  *config.NetworkResources
 	nodeWallet *wallet.Wallet
-	ecManager  *services.ExecutionClientManager
-	bcManager  *services.BeaconClientManager
+	ecManager  *ExecutionClientManager
+	bcManager  *BeaconClientManager
 	docker     *client.Client
 	txMgr      *eth.TransactionManager
 	queryMgr   *eth.QueryManager
-	resources  *utils.Resources
+	debugMode  bool
 
 	// TODO: find a better place for this than the common service provider
 	apiLogger    *log.ColorLogger
 	walletLogger *log.ColorLogger
-
-	// Path info
-	userDir string
 }
 
 // Creates a new ServiceProvider instance
-func NewServiceProvider(userDir string) (*ServiceProvider, error) {
-	// Config
-	cfgPath := filepath.Join(userDir, config.ConfigFilename)
-	cfg, err := loadConfigFromFile(os.ExpandEnv(cfgPath))
-	if err != nil {
-		return nil, fmt.Errorf("error loading hyperdrive config: %w", err)
-	}
-	if cfg == nil {
-		return nil, fmt.Errorf("hyperdrive config settings file [%s] not found", cfgPath)
-	}
-
+func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMode bool) (*ServiceProvider, error) {
 	// Loggers
 	apiLogger := log.NewColorLogger(apiLogColor)
 	walletLogger := log.NewColorLogger(walletLogColor)
 
-	// Resources
-	resources := utils.NewResources(cfg.Network.Value)
-
 	// Wallet
-	userDataPath, err := homedir.Expand(cfg.UserDataPath.Value)
-	if err != nil {
-		return nil, fmt.Errorf("error expanding user data path [%s]: %w", cfg.UserDataPath.Value, err)
-	}
-	nodeAddressPath := filepath.Join(userDataPath, config.UserAddressFilename)
-	walletDataPath := filepath.Join(userDataPath, config.UserWalletDataFilename)
-	passwordPath := filepath.Join(userDataPath, config.UserPasswordFilename)
+	resources := cfg.GetNetworkResources()
+	nodeAddressPath := filepath.Join(cfg.GetNodeAddressFilePath())
+	walletDataPath := filepath.Join(cfg.GetWalletFilePath())
+	passwordPath := filepath.Join(cfg.GetPasswordFilePath())
 	nodeWallet, err := wallet.NewWallet(&walletLogger, walletDataPath, nodeAddressPath, passwordPath, resources.ChainID)
 	if err != nil {
 		return nil, fmt.Errorf("error creating node wallet: %w", err)
 	}
 
 	// EC Manager
-	ecManager, err := services.NewExecutionClientManager(cfg)
+	primaryEcUrl, fallbackEcUrl := cfg.GetExecutionClientUrls()
+	ecManager, err := NewExecutionClientManager(primaryEcUrl, fallbackEcUrl, resources.ChainID, clientTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("error creating executon client manager: %w", err)
 	}
 
 	// Beacon manager
-	bcManager, err := services.NewBeaconClientManager(cfg)
+	primaryBnUrl, fallbackBnUrl := cfg.GetBeaconNodeUrls()
+	bcManager, err := NewBeaconClientManager(primaryBnUrl, fallbackBnUrl, clientTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("error creating Beacon client manager: %w", err)
 	}
@@ -107,16 +88,16 @@ func NewServiceProvider(userDir string) (*ServiceProvider, error) {
 
 	// Create the provider
 	provider := &ServiceProvider{
-		userDir:    userDir,
 		cfg:        cfg,
+		resources:  resources,
 		nodeWallet: nodeWallet,
 		ecManager:  ecManager,
 		bcManager:  bcManager,
 		docker:     dockerClient,
-		resources:  resources,
 		txMgr:      txMgr,
 		queryMgr:   queryMgr,
 		apiLogger:  &apiLogger,
+		debugMode:  debugMode,
 	}
 	return provider, nil
 }
@@ -125,32 +106,28 @@ func NewServiceProvider(userDir string) (*ServiceProvider, error) {
 // === Getters ===
 // ===============
 
-func (p *ServiceProvider) GetUserDir() string {
-	return p.userDir
+func (p *ServiceProvider) GetConfig() config.IConfig {
+	return p.cfg
 }
 
-func (p *ServiceProvider) GetConfig() *config.HyperdriveConfig {
-	return p.cfg
+func (p *ServiceProvider) GetNetworkResources() *config.NetworkResources {
+	return p.resources
 }
 
 func (p *ServiceProvider) GetWallet() *wallet.Wallet {
 	return p.nodeWallet
 }
 
-func (p *ServiceProvider) GetEthClient() *services.ExecutionClientManager {
+func (p *ServiceProvider) GetEthClient() *ExecutionClientManager {
 	return p.ecManager
 }
 
-func (p *ServiceProvider) GetBeaconClient() *services.BeaconClientManager {
+func (p *ServiceProvider) GetBeaconClient() *BeaconClientManager {
 	return p.bcManager
 }
 
 func (p *ServiceProvider) GetDocker() *client.Client {
 	return p.docker
-}
-
-func (p *ServiceProvider) GetResources() *utils.Resources {
-	return p.resources
 }
 
 func (p *ServiceProvider) GetTransactionManager() *eth.TransactionManager {
@@ -166,24 +143,5 @@ func (p *ServiceProvider) GetApiLogger() *log.ColorLogger {
 }
 
 func (p *ServiceProvider) IsDebugMode() bool {
-	return p.cfg.DebugMode.Value
-}
-
-// =============
-// === Utils ===
-// =============
-
-// Loads a Hyperdrive config without updating it if it exists
-func loadConfigFromFile(path string) (*config.HyperdriveConfig, error) {
-	_, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		return nil, nil
-	}
-
-	cfg, err := config.LoadFromFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return cfg, nil
+	return p.debugMode
 }

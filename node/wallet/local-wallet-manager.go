@@ -8,6 +8,7 @@ import (
 	"math/big"
 
 	"github.com/goccy/go-json"
+	"github.com/rocket-pool/node-manager-core/node/validator/utils"
 	"github.com/rocket-pool/node-manager-core/wallet"
 
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
@@ -19,7 +20,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
-	"github.com/nodeset-org/hyperdrive/daemon-utils/validator/utils"
 	"github.com/tyler-smith/go-bip39"
 	eth2util "github.com/wealdtech/go-eth2-util"
 	eth2ks "github.com/wealdtech/go-eth2-wallet-encryptor-keystorev4"
