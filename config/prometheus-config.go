@@ -50,7 +50,7 @@ func NewPrometheusConfig() *PrometheusConfig {
 				CanBeBlank:         false,
 				OverwriteOnUpgrade: false,
 			},
-			Options: getPortModes(""),
+			Options: GetPortModes(""),
 			Default: map[Network]RpcPortMode{
 				Network_All: RpcPortMode_Closed,
 			},

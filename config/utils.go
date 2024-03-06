@@ -7,7 +7,7 @@ import (
 )
 
 // Get the possible RPC port mode options
-func getPortModes(warningOverride string) []*ParameterOption[RpcPortMode] {
+func GetPortModes(warningOverride string) []*ParameterOption[RpcPortMode] {
 	if warningOverride == "" {
 		warningOverride = "Allow connections from external hosts. This is safe if you're running your node on your local network. If you're a VPS user, this would expose your node to the internet"
 	}
@@ -38,7 +38,7 @@ func getPortModes(warningOverride string) []*ParameterOption[RpcPortMode] {
 // Get the external IP address. Try finding an IPv4 address first to:
 // * Improve peer discovery and node performance
 // * Avoid unnecessary container restarts caused by switching between IPv4 and IPv6
-func getExternalIP() (net.IP, error) {
+func GetExternalIP() (net.IP, error) {
 	// Try IPv4 first
 	ip4Consensus := externalip.DefaultConsensus(nil, nil)
 	ip4Consensus.UseIPProtocol(4)

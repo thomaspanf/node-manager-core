@@ -72,7 +72,7 @@ func NewPrysmBnConfig() *PrysmBnConfig {
 				CanBeBlank:         false,
 				OverwriteOnUpgrade: false,
 			},
-			Options: getPortModes("Allow connections from external hosts. This is safe if you're running your node on your local network. If you're a VPS user, this would expose your node to the internet and could make it vulnerable to MEV/tips theft"),
+			Options: GetPortModes("Allow connections from external hosts. This is safe if you're running your node on your local network. If you're a VPS user, this would expose your node to the internet and could make it vulnerable to MEV/tips theft"),
 			Default: map[Network]RpcPortMode{
 				Network_All: RpcPortMode_Closed,
 			},
