@@ -298,15 +298,15 @@ func (c *StandardHttpClient) GetValidatorSyncDuties(ctx context.Context, indices
 	responseBody, status, err := c.postRequest(ctx, fmt.Sprintf(RequestValidatorSyncDuties, strconv.FormatUint(epoch, 10)), indices)
 
 	if err != nil {
-		return nil, fmt.Errorf("Could not get validator sync duties: %w", err)
+		return nil, fmt.Errorf("error getting validator sync duties: %w", err)
 	}
 	if status != http.StatusOK {
-		return nil, fmt.Errorf("Could not get validator sync duties: HTTP status %d; response body: '%s'", status, string(responseBody))
+		return nil, fmt.Errorf("error getting validator sync duties: HTTP status %d; response body: '%s'", status, string(responseBody))
 	}
 
 	var response SyncDutiesResponse
 	if err := json.Unmarshal(responseBody, &response); err != nil {
-		return nil, fmt.Errorf("Could not decode validator sync duties data: %w", err)
+		return nil, fmt.Errorf("error decoding validator sync duties data: %w", err)
 	}
 
 	// Map the results
@@ -332,15 +332,15 @@ func (c *StandardHttpClient) GetValidatorProposerDuties(ctx context.Context, ind
 	responseBody, status, err := c.getRequest(ctx, fmt.Sprintf(RequestValidatorProposerDuties, strconv.FormatUint(epoch, 10)))
 
 	if err != nil {
-		return nil, fmt.Errorf("Could not get validator proposer duties: %w", err)
+		return nil, fmt.Errorf("error getting validator proposer duties: %w", err)
 	}
 	if status != http.StatusOK {
-		return nil, fmt.Errorf("Could not get validator proposer duties: HTTP status %d; response body: '%s'", status, string(responseBody))
+		return nil, fmt.Errorf("error getting validator proposer duties: HTTP status %d; response body: '%s'", status, string(responseBody))
 	}
 
 	var response ProposerDutiesResponse
 	if err := json.Unmarshal(responseBody, &response); err != nil {
-		return nil, fmt.Errorf("Could not decode validator proposer duties data: %w", err)
+		return nil, fmt.Errorf("error decoding validator proposer duties data: %w", err)
 	}
 
 	// Map the results
@@ -369,7 +369,7 @@ func (c *StandardHttpClient) GetValidatorIndex(ctx context.Context, pubkey Valid
 		return "", err
 	}
 	if len(validators.Data) == 0 {
-		return "", fmt.Errorf("Validator %s index not found.", pubkeyString)
+		return "", fmt.Errorf("validator %s index not found", pubkeyString)
 	}
 	validator := validators.Data[0]
 
@@ -471,7 +471,7 @@ func (c *StandardHttpClient) GetAttestations(ctx context.Context, blockId string
 		attestationInfo[i].CommitteeIndex = uint64(attestation.Data.Index)
 		attestationInfo[i].AggregationBits, err = hex.DecodeString(bitString)
 		if err != nil {
-			return nil, false, fmt.Errorf("Error decoding aggregation bits for attestation %d of block %s: %w", i, blockId, err)
+			return nil, false, fmt.Errorf("error decoding aggregation bits for attestation %d of block %s: %w", i, blockId, err)
 		}
 	}
 
@@ -510,7 +510,7 @@ func (c *StandardHttpClient) GetBeaconBlock(ctx context.Context, blockId string)
 		}
 		info.AggregationBits, err = hex.DecodeString(bitString)
 		if err != nil {
-			return BeaconBlock{}, false, fmt.Errorf("Error decoding aggregation bits for attestation %d of block %s: %w", i, blockId, err)
+			return BeaconBlock{}, false, fmt.Errorf("error decoding aggregation bits for attestation %d of block %s: %w", i, blockId, err)
 		}
 		beaconBlock.Attestations = append(beaconBlock.Attestations, info)
 	}
@@ -534,14 +534,14 @@ func (c *StandardHttpClient) ChangeWithdrawalCredentials(ctx context.Context, va
 func (c *StandardHttpClient) getSyncStatus(ctx context.Context) (SyncStatusResponse, error) {
 	responseBody, status, err := c.getRequest(ctx, RequestSyncStatusPath)
 	if err != nil {
-		return SyncStatusResponse{}, fmt.Errorf("Could not get node sync status: %w", err)
+		return SyncStatusResponse{}, fmt.Errorf("error getting node sync status: %w", err)
 	}
 	if status != http.StatusOK {
-		return SyncStatusResponse{}, fmt.Errorf("Could not get node sync status: HTTP status %d; response body: '%s'", status, string(responseBody))
+		return SyncStatusResponse{}, fmt.Errorf("error getting node sync status: HTTP status %d; response body: '%s'", status, string(responseBody))
 	}
 	var syncStatus SyncStatusResponse
 	if err := json.Unmarshal(responseBody, &syncStatus); err != nil {
-		return SyncStatusResponse{}, fmt.Errorf("Could not decode node sync status: %w", err)
+		return SyncStatusResponse{}, fmt.Errorf("error decoding node sync status: %w", err)
 	}
 	return syncStatus, nil
 }
@@ -550,14 +550,14 @@ func (c *StandardHttpClient) getSyncStatus(ctx context.Context) (SyncStatusRespo
 func (c *StandardHttpClient) getEth2Config(ctx context.Context) (Eth2ConfigResponse, error) {
 	responseBody, status, err := c.getRequest(ctx, RequestEth2ConfigPath)
 	if err != nil {
-		return Eth2ConfigResponse{}, fmt.Errorf("Could not get eth2 config: %w", err)
+		return Eth2ConfigResponse{}, fmt.Errorf("error getting eth2 config: %w", err)
 	}
 	if status != http.StatusOK {
-		return Eth2ConfigResponse{}, fmt.Errorf("Could not get eth2 config: HTTP status %d; response body: '%s'", status, string(responseBody))
+		return Eth2ConfigResponse{}, fmt.Errorf("error getting eth2 config: HTTP status %d; response body: '%s'", status, string(responseBody))
 	}
 	var eth2Config Eth2ConfigResponse
 	if err := json.Unmarshal(responseBody, &eth2Config); err != nil {
-		return Eth2ConfigResponse{}, fmt.Errorf("Could not decode eth2 config: %w", err)
+		return Eth2ConfigResponse{}, fmt.Errorf("error decoding eth2 config: %w", err)
 	}
 	return eth2Config, nil
 }
@@ -566,14 +566,14 @@ func (c *StandardHttpClient) getEth2Config(ctx context.Context) (Eth2ConfigRespo
 func (c *StandardHttpClient) getEth2DepositContract(ctx context.Context) (Eth2DepositContractResponse, error) {
 	responseBody, status, err := c.getRequest(ctx, RequestEth2DepositContractMethod)
 	if err != nil {
-		return Eth2DepositContractResponse{}, fmt.Errorf("Could not get eth2 deposit contract: %w", err)
+		return Eth2DepositContractResponse{}, fmt.Errorf("error getting eth2 deposit contract: %w", err)
 	}
 	if status != http.StatusOK {
-		return Eth2DepositContractResponse{}, fmt.Errorf("Could not get eth2 deposit contract: HTTP status %d; response body: '%s'", status, string(responseBody))
+		return Eth2DepositContractResponse{}, fmt.Errorf("error gettingeth2 deposit contract: HTTP status %d; response body: '%s'", status, string(responseBody))
 	}
 	var eth2DepositContract Eth2DepositContractResponse
 	if err := json.Unmarshal(responseBody, &eth2DepositContract); err != nil {
-		return Eth2DepositContractResponse{}, fmt.Errorf("Could not decode eth2 deposit contract: %w", err)
+		return Eth2DepositContractResponse{}, fmt.Errorf("error decoding eth2 deposit contract: %w", err)
 	}
 	return eth2DepositContract, nil
 }
@@ -582,14 +582,14 @@ func (c *StandardHttpClient) getEth2DepositContract(ctx context.Context) (Eth2De
 func (c *StandardHttpClient) getGenesis(ctx context.Context) (GenesisResponse, error) {
 	responseBody, status, err := c.getRequest(ctx, RequestGenesisPath)
 	if err != nil {
-		return GenesisResponse{}, fmt.Errorf("Could not get genesis data: %w", err)
+		return GenesisResponse{}, fmt.Errorf("error getting genesis data: %w", err)
 	}
 	if status != http.StatusOK {
-		return GenesisResponse{}, fmt.Errorf("Could not get genesis data: HTTP status %d; response body: '%s'", status, string(responseBody))
+		return GenesisResponse{}, fmt.Errorf("error getting genesis data: HTTP status %d; response body: '%s'", status, string(responseBody))
 	}
 	var genesis GenesisResponse
 	if err := json.Unmarshal(responseBody, &genesis); err != nil {
-		return GenesisResponse{}, fmt.Errorf("Could not decode genesis: %w", err)
+		return GenesisResponse{}, fmt.Errorf("error decoding genesis: %w", err)
 	}
 	return genesis, nil
 }
@@ -598,14 +598,14 @@ func (c *StandardHttpClient) getGenesis(ctx context.Context) (GenesisResponse, e
 func (c *StandardHttpClient) getFinalityCheckpoints(ctx context.Context, stateId string) (FinalityCheckpointsResponse, error) {
 	responseBody, status, err := c.getRequest(ctx, fmt.Sprintf(RequestFinalityCheckpointsPath, stateId))
 	if err != nil {
-		return FinalityCheckpointsResponse{}, fmt.Errorf("Could not get finality checkpoints: %w", err)
+		return FinalityCheckpointsResponse{}, fmt.Errorf("error getting finality checkpoints: %w", err)
 	}
 	if status != http.StatusOK {
-		return FinalityCheckpointsResponse{}, fmt.Errorf("Could not get finality checkpoints: HTTP status %d; response body: '%s'", status, string(responseBody))
+		return FinalityCheckpointsResponse{}, fmt.Errorf("error getting finality checkpoints: HTTP status %d; response body: '%s'", status, string(responseBody))
 	}
 	var finalityCheckpoints FinalityCheckpointsResponse
 	if err := json.Unmarshal(responseBody, &finalityCheckpoints); err != nil {
-		return FinalityCheckpointsResponse{}, fmt.Errorf("Could not decode finality checkpoints: %w", err)
+		return FinalityCheckpointsResponse{}, fmt.Errorf("error decoding finality checkpoints: %w", err)
 	}
 	return finalityCheckpoints, nil
 }
@@ -614,14 +614,14 @@ func (c *StandardHttpClient) getFinalityCheckpoints(ctx context.Context, stateId
 func (c *StandardHttpClient) getFork(ctx context.Context, stateId string) (ForkResponse, error) {
 	responseBody, status, err := c.getRequest(ctx, fmt.Sprintf(RequestForkPath, stateId))
 	if err != nil {
-		return ForkResponse{}, fmt.Errorf("Could not get fork data: %w", err)
+		return ForkResponse{}, fmt.Errorf("error getting fork data: %w", err)
 	}
 	if status != http.StatusOK {
-		return ForkResponse{}, fmt.Errorf("Could not get fork data: HTTP status %d; response body: '%s'", status, string(responseBody))
+		return ForkResponse{}, fmt.Errorf("error getting fork data: HTTP status %d; response body: '%s'", status, string(responseBody))
 	}
 	var fork ForkResponse
 	if err := json.Unmarshal(responseBody, &fork); err != nil {
-		return ForkResponse{}, fmt.Errorf("Could not decode fork data: %w", err)
+		return ForkResponse{}, fmt.Errorf("error decoding fork data: %w", err)
 	}
 	return fork, nil
 }
@@ -634,14 +634,14 @@ func (c *StandardHttpClient) getValidators(ctx context.Context, stateId string, 
 	}
 	responseBody, status, err := c.getRequest(ctx, fmt.Sprintf(RequestValidatorsPath, stateId)+query)
 	if err != nil {
-		return ValidatorsResponse{}, fmt.Errorf("Could not get validators: %w", err)
+		return ValidatorsResponse{}, fmt.Errorf("error getting validators: %w", err)
 	}
 	if status != http.StatusOK {
-		return ValidatorsResponse{}, fmt.Errorf("Could not get validators: HTTP status %d; response body: '%s'", status, string(responseBody))
+		return ValidatorsResponse{}, fmt.Errorf("error getting validators: HTTP status %d; response body: '%s'", status, string(responseBody))
 	}
 	var validators ValidatorsResponse
 	if err := json.Unmarshal(responseBody, &validators); err != nil {
-		return ValidatorsResponse{}, fmt.Errorf("Could not decode validators: %w", err)
+		return ValidatorsResponse{}, fmt.Errorf("error decoding validators: %w", err)
 	}
 	return validators, nil
 }
@@ -717,10 +717,10 @@ func (c *StandardHttpClient) getValidatorsByOpts(ctx context.Context, pubkeysOrI
 func (c *StandardHttpClient) postVoluntaryExit(ctx context.Context, request VoluntaryExitRequest) error {
 	responseBody, status, err := c.postRequest(ctx, RequestVoluntaryExitPath, request)
 	if err != nil {
-		return fmt.Errorf("Could not broadcast exit for validator at index %s: %w", request.Message.ValidatorIndex, err)
+		return fmt.Errorf("error broadcasting exit for validator at index %s: %w", request.Message.ValidatorIndex, err)
 	}
 	if status != http.StatusOK {
-		return fmt.Errorf("Could not broadcast exit for validator at index %s: HTTP status %d; response body: '%s'", request.Message.ValidatorIndex, status, string(responseBody))
+		return fmt.Errorf("error broadcasting exit for validator at index %s: HTTP status %d; response body: '%s'", request.Message.ValidatorIndex, status, string(responseBody))
 	}
 	return nil
 }
@@ -729,17 +729,17 @@ func (c *StandardHttpClient) postVoluntaryExit(ctx context.Context, request Volu
 func (c *StandardHttpClient) getAttestations(ctx context.Context, blockId string) (AttestationsResponse, bool, error) {
 	responseBody, status, err := c.getRequest(ctx, fmt.Sprintf(RequestAttestationsPath, blockId))
 	if err != nil {
-		return AttestationsResponse{}, false, fmt.Errorf("Could not get attestations data for slot %s: %w", blockId, err)
+		return AttestationsResponse{}, false, fmt.Errorf("error getting attestations data for slot %s: %w", blockId, err)
 	}
 	if status == http.StatusNotFound {
 		return AttestationsResponse{}, false, nil
 	}
 	if status != http.StatusOK {
-		return AttestationsResponse{}, false, fmt.Errorf("Could not get attestations data for slot %s: HTTP status %d; response body: '%s'", blockId, status, string(responseBody))
+		return AttestationsResponse{}, false, fmt.Errorf("error getting attestations data for slot %s: HTTP status %d; response body: '%s'", blockId, status, string(responseBody))
 	}
 	var attestations AttestationsResponse
 	if err := json.Unmarshal(responseBody, &attestations); err != nil {
-		return AttestationsResponse{}, false, fmt.Errorf("Could not decode attestations data for slot %s: %w", blockId, err)
+		return AttestationsResponse{}, false, fmt.Errorf("error decoding attestations data for slot %s: %w", blockId, err)
 	}
 	return attestations, true, nil
 }
@@ -748,17 +748,17 @@ func (c *StandardHttpClient) getAttestations(ctx context.Context, blockId string
 func (c *StandardHttpClient) getBeaconBlock(ctx context.Context, blockId string) (BeaconBlockResponse, bool, error) {
 	responseBody, status, err := c.getRequest(ctx, fmt.Sprintf(RequestBeaconBlockPath, blockId))
 	if err != nil {
-		return BeaconBlockResponse{}, false, fmt.Errorf("Could not get beacon block data: %w", err)
+		return BeaconBlockResponse{}, false, fmt.Errorf("error getting beacon block data: %w", err)
 	}
 	if status == http.StatusNotFound {
 		return BeaconBlockResponse{}, false, nil
 	}
 	if status != http.StatusOK {
-		return BeaconBlockResponse{}, false, fmt.Errorf("Could not get beacon block data: HTTP status %d; response body: '%s'", status, string(responseBody))
+		return BeaconBlockResponse{}, false, fmt.Errorf("error getting beacon block data: HTTP status %d; response body: '%s'", status, string(responseBody))
 	}
 	var beaconBlock BeaconBlockResponse
 	if err := json.Unmarshal(responseBody, &beaconBlock); err != nil {
-		return BeaconBlockResponse{}, false, fmt.Errorf("Could not decode beacon block data: %w", err)
+		return BeaconBlockResponse{}, false, fmt.Errorf("error decoding beacon block data: %w", err)
 	}
 	return beaconBlock, true, nil
 }
@@ -768,10 +768,10 @@ func (c *StandardHttpClient) postWithdrawalCredentialsChange(ctx context.Context
 	requestArray := []BLSToExecutionChangeRequest{request} // This route must be wrapped in an array
 	responseBody, status, err := c.postRequest(ctx, RequestWithdrawalCredentialsChangePath, requestArray)
 	if err != nil {
-		return fmt.Errorf("Could not broadcast withdrawal credentials change for validator %d: %w", request.Message.ValidatorIndex, err)
+		return fmt.Errorf("error broadcasting withdrawal credentials change for validator %s: %w", request.Message.ValidatorIndex, err)
 	}
 	if status != http.StatusOK {
-		return fmt.Errorf("Could not broadcast withdrawal credentials change for validator %d: HTTP status %d; response body: '%s'", request.Message.ValidatorIndex, status, string(responseBody))
+		return fmt.Errorf("error broadcasting withdrawal credentials change for validator %s: HTTP status %d; response body: '%s'", request.Message.ValidatorIndex, status, string(responseBody))
 	}
 	return nil
 }
@@ -784,6 +784,7 @@ func (c *StandardHttpClient) getRequestReader(ctx context.Context, requestPath s
 	if err != nil {
 		return nil, 0, fmt.Errorf("error creating GET request to [%s]: %w", path, err)
 	}
+	req.Header.Set("Content-Type", RequestContentType)
 
 	// Submit the request
 	response, err := c.client.Do(req)
@@ -830,6 +831,7 @@ func (c *StandardHttpClient) postRequest(ctx context.Context, requestPath string
 	if err != nil {
 		return nil, 0, fmt.Errorf("error creating POST request to [%s]: %w", path, err)
 	}
+	request.Header.Set("Content-Type", RequestContentType)
 
 	// Submit the request
 	response, err := c.client.Do(request)
