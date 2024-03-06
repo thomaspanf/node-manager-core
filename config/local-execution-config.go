@@ -40,7 +40,7 @@ type LocalExecutionConfig struct {
 }
 
 // Create a new LocalExecutionConfig struct
-func NewExecutionCommonConfig() *LocalExecutionConfig {
+func NewLocalExecutionConfig() *LocalExecutionConfig {
 	cfg := &LocalExecutionConfig{
 		ExecutionClient: Parameter[ExecutionClient]{
 			ParameterCommon: &ParameterCommon{
@@ -186,7 +186,7 @@ func (cfg *LocalExecutionConfig) GetSubconfigs() map[string]IConfigSection {
 // ==================
 
 // Get the Docker mapping for the selected API port mode
-func (cfg *LocalExecutionConfig) getOpenApiPortMapping() string {
+func (cfg *LocalExecutionConfig) GetOpenApiPortMapping() string {
 	rpcMode := cfg.OpenApiPorts.Value
 	if !rpcMode.IsOpen() {
 		return ""
@@ -197,7 +197,7 @@ func (cfg *LocalExecutionConfig) getOpenApiPortMapping() string {
 }
 
 // Gets the max peers of the selected EC
-func (cfg *LocalExecutionConfig) getMaxPeers() uint16 {
+func (cfg *LocalExecutionConfig) GetMaxPeers() uint16 {
 	switch cfg.ExecutionClient.Value {
 	case ExecutionClient_Geth:
 		return cfg.Geth.MaxPeers.Value
@@ -211,7 +211,7 @@ func (cfg *LocalExecutionConfig) getMaxPeers() uint16 {
 }
 
 // Get the container tag of the selected EC
-func (cfg *LocalExecutionConfig) getContainerTag() string {
+func (cfg *LocalExecutionConfig) GetContainerTag() string {
 	switch cfg.ExecutionClient.Value {
 	case ExecutionClient_Geth:
 		return cfg.Geth.ContainerTag.Value
@@ -225,7 +225,7 @@ func (cfg *LocalExecutionConfig) getContainerTag() string {
 }
 
 // Gets the additional flags of the selected EC
-func (cfg *LocalExecutionConfig) getAdditionalFlags() string {
+func (cfg *LocalExecutionConfig) GetAdditionalFlags() string {
 	switch cfg.ExecutionClient.Value {
 	case ExecutionClient_Geth:
 		return cfg.Geth.AdditionalFlags.Value

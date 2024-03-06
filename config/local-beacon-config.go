@@ -186,7 +186,7 @@ func (cfg *LocalBeaconConfig) GetSubconfigs() map[string]IConfigSection {
 // ==================
 
 // Get the Docker mapping for the selected API port mode
-func (cfg *LocalBeaconConfig) getOpenApiPortMapping() []string {
+func (cfg *LocalBeaconConfig) GetOpenApiPortMapping() []string {
 	bnOpenPorts := make([]string, 0)
 
 	// Handle the standard HTTP API port
@@ -208,7 +208,7 @@ func (cfg *LocalBeaconConfig) getOpenApiPortMapping() []string {
 }
 
 // Gets the max peers of the selected EC
-func (cfg *LocalBeaconConfig) getMaxPeers() uint16 {
+func (cfg *LocalBeaconConfig) GetMaxPeers() uint16 {
 	switch cfg.BeaconNode.Value {
 	case BeaconNode_Lighthouse:
 		return cfg.Lighthouse.MaxPeers.Value
@@ -226,7 +226,7 @@ func (cfg *LocalBeaconConfig) getMaxPeers() uint16 {
 }
 
 // Get the container tag of the selected BN
-func (cfg *LocalBeaconConfig) getContainerTag() string {
+func (cfg *LocalBeaconConfig) GetContainerTag() string {
 	switch cfg.BeaconNode.Value {
 	case BeaconNode_Lighthouse:
 		return cfg.Lighthouse.ContainerTag.Value
@@ -244,7 +244,7 @@ func (cfg *LocalBeaconConfig) getContainerTag() string {
 }
 
 // Gets the additional flags of the selected BN
-func (cfg *LocalBeaconConfig) getAdditionalFlags() string {
+func (cfg *LocalBeaconConfig) GetAdditionalFlags() string {
 	switch cfg.BeaconNode.Value {
 	case BeaconNode_Lighthouse:
 		return cfg.Lighthouse.AdditionalFlags.Value
