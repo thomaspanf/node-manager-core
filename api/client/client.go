@@ -45,7 +45,7 @@ type RequesterContext struct {
 	Base string
 }
 
-// IRequester is an interface for making HTTP requests to a specific subroute on the Hyperdrive Daemon
+// IRequester is an interface for making HTTP requests to a specific subroute on the NMC server
 type IRequester interface {
 	// The human-readable requester name (for logging)
 	GetName() string
@@ -57,7 +57,7 @@ type IRequester interface {
 	GetContext() *RequesterContext
 }
 
-// Binder for the Hyperdrive daemon API server
+// Binder for the NMC API server
 type ApiClient struct {
 	context *RequesterContext
 }
@@ -108,7 +108,7 @@ func RawGetRequest[DataType any](context *RequesterContext, path string, params 
 	// Make sure the socket exists
 	_, err := os.Stat(context.SocketPath)
 	if errors.Is(err, fs.ErrNotExist) {
-		return nil, fmt.Errorf("the socket at [%s] does not exist - please start the Hyperdrive daemon and try again", context.SocketPath)
+		return nil, fmt.Errorf("the socket at [%s] does not exist - please start the service and try again", context.SocketPath)
 	}
 
 	// Create the request
@@ -154,7 +154,7 @@ func RawPostRequest[DataType any](context *RequesterContext, path string, body s
 	// Make sure the socket exists
 	_, err := os.Stat(context.SocketPath)
 	if errors.Is(err, fs.ErrNotExist) {
-		return nil, fmt.Errorf("the socket at [%s] does not exist - please start the Hyperdrive daemon and try again", context.SocketPath)
+		return nil, fmt.Errorf("the socket at [%s] does not exist - please start the service and try again", context.SocketPath)
 	}
 
 	// Debug log

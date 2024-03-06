@@ -103,7 +103,7 @@ const (
 	// Unknown
 	ClientMode_Unknown ClientMode = ""
 
-	// Locally-owned clients (managed by Hyperdrive)
+	// Locally-owned clients (managed by the NMC service)
 	ClientMode_Local ClientMode = "local"
 
 	// Externally-managed clients (managed by the user)

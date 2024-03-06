@@ -41,7 +41,7 @@ func NewPrysmVcConfig() *PrysmVcConfig {
 			ParameterCommon: &ParameterCommon{
 				ID:                 ids.AdditionalFlagsID,
 				Name:               "Additional Validator Client Flags",
-				Description:        "Additional custom command line flags you want to pass the Prysm Validator Client, to take advantage of other settings that Hyperdrive's configuration doesn't cover.",
+				Description:        "Additional custom command line flags you want to pass the Prysm Validator Client, to take advantage of other settings that aren't covered here.",
 				AffectsContainers:  []ContainerID{ContainerID_ValidatorClient},
 				CanBeBlank:         true,
 				OverwriteOnUpgrade: false,

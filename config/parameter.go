@@ -36,7 +36,7 @@ type ParameterCommon struct {
 	// Whether or not the parameter is allowed to be blank
 	CanBeBlank bool
 
-	// True to reset the parameter's value to the default option after Hyperdrive is updated
+	// True to reset the parameter's value to the default option after the config is updated
 	OverwriteOnUpgrade bool
 
 	// Descriptions of the parameter that change depending on the selected network

@@ -61,7 +61,7 @@ func NewExternalExecutionConfig() *ExternalExecutionConfig {
 			ParameterCommon: &ParameterCommon{
 				ID:                 ids.HttpUrlID,
 				Name:               "HTTP URL",
-				Description:        "The URL of the HTTP RPC endpoint for your external Execution client.\nNOTE: If you are running it on the same machine as Hyperdrive, addresses like `localhost` and `127.0.0.1` will not work due to Docker limitations. Enter your machine's LAN IP address instead, for example 'http://192.168.1.100:8545'.",
+				Description:        "The URL of the HTTP RPC endpoint for your external Execution client.\nNOTE: If you are running it on the same machine as this node, addresses like `localhost` and `127.0.0.1` will not work due to Docker limitations. Enter your machine's LAN IP address instead, for example 'http://192.168.1.100:8545'.",
 				AffectsContainers:  []ContainerID{ContainerID_Daemon},
 				CanBeBlank:         false,
 				OverwriteOnUpgrade: false,
@@ -75,7 +75,7 @@ func NewExternalExecutionConfig() *ExternalExecutionConfig {
 			ParameterCommon: &ParameterCommon{
 				ID:                 WebsocketUrlID,
 				Name:               "Websocket URL",
-				Description:        "The URL of the Websocket RPC endpoint for your external Execution client.\nNOTE: If you are running it on the same machine as Hyperdrive, addresses like `localhost` and `127.0.0.1` will not work due to Docker limitations. Enter your machine's LAN IP address instead, for example 'http://192.168.1.100:8545'.",
+				Description:        "The URL of the Websocket RPC endpoint for your external Execution client.\nNOTE: If you are running it on the same machine as this node, addresses like `localhost` and `127.0.0.1` will not work due to Docker limitations. Enter your machine's LAN IP address instead, for example 'http://192.168.1.100:8545'.",
 				AffectsContainers:  []ContainerID{},
 				CanBeBlank:         false,
 				OverwriteOnUpgrade: false,

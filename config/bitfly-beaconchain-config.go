@@ -53,13 +53,13 @@ func NewBitflyNodeMetricsConfig() *BitflyNodeMetricsConfig {
 			ParameterCommon: &ParameterCommon{
 				ID:                 BitflyMachineNameID,
 				Name:               "Node Metrics Machine Name",
-				Description:        "The name of the machine you are running on. This is used to identify your machine in the mobile app.\nChange this if you are running multiple Hyperdrives with the same Secret.",
+				Description:        "The name of the machine you are running on. This is used to identify your machine in the mobile app.\nChange this if you are running multiple nodes with the same Secret.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient, ContainerID_ValidatorClient},
 				CanBeBlank:         true,
 				OverwriteOnUpgrade: false,
 			},
 			Default: map[Network]string{
-				Network_All: "Hyperdrive Node",
+				Network_All: "Node",
 			},
 		},
 	}

@@ -35,7 +35,7 @@ type ExecutionClientManager struct {
 // This is a signature for a wrapped ethclient.Client function
 type ecFunction func(*ethclient.Client) (interface{}, error)
 
-// Creates a new ExecutionClientManager instance based on the Hyperdrive config
+// Creates a new ExecutionClientManager instance
 func NewExecutionClientManager(primaryEcUrl string, fallbackEcUrl string, chainID uint, clientTimeout time.Duration) (*ExecutionClientManager, error) {
 	primaryEc, err := ethclient.Dial(primaryEcUrl)
 	if err != nil {

@@ -49,9 +49,9 @@ func NewApiServer(socketPath string, handlers []IHandler, route string) (*ApiMan
 	}
 
 	// Register each route
-	hyperdriveRouter := router.Host(route).Subrouter()
+	nmcRouter := router.Host(route).Subrouter()
 	for _, handler := range mgr.handlers {
-		handler.RegisterRoutes(hyperdriveRouter)
+		handler.RegisterRoutes(nmcRouter)
 	}
 
 	// Create the socket directory

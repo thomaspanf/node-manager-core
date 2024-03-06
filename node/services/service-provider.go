@@ -19,7 +19,7 @@ const (
 	walletLogColor color.Attribute = color.FgYellow
 )
 
-// A container for all of the various services used by Hyperdrive
+// A container for all of the various services used by the node service
 type ServiceProvider struct {
 	// Services
 	cfg        config.IConfig

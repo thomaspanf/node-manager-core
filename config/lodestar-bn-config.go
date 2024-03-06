@@ -57,7 +57,7 @@ func NewLodestarBnConfig() *LodestarBnConfig {
 			ParameterCommon: &ParameterCommon{
 				ID:                 ids.AdditionalFlagsID,
 				Name:               "Additional Flags",
-				Description:        "Additional custom command line flags you want to pass Lodestar's Beacon Client, to take advantage of other settings that Hyperdrive's configuration doesn't cover.",
+				Description:        "Additional custom command line flags you want to pass Lodestar's Beacon Client, to take advantage of other settings that aren't covered here.",
 				AffectsContainers:  []ContainerID{ContainerID_BeaconNode},
 				CanBeBlank:         true,
 				OverwriteOnUpgrade: false,

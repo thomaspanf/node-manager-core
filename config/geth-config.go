@@ -39,7 +39,7 @@ func NewGethConfig() *GethConfig {
 			ParameterCommon: &ParameterCommon{
 				ID:                 GethEnablePbssID,
 				Name:               "Enable PBSS",
-				Description:        "Enable Geth's new path-based state scheme. With this enabled, you will no longer need to manually prune Geth; it will automatically prune its database in real-time.\n\n[orange]NOTE:\nEnabling this will require you to remove and resync your Geth DB using `hyperdrive service resync-eth1`.\nYou will need a synced fallback node configured before doing this, or you will no longer be able to attest until it has finished resyncing!",
+				Description:        "Enable Geth's new path-based state scheme. With this enabled, you will no longer need to manually prune Geth; it will automatically prune its database in real-time.\n\n[orange]NOTE:\nEnabling this will require you to remove and resync your Geth DB.\nYou will need a synced fallback node configured before doing this, or you will no longer be able to attest until it has finished resyncing!",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
 				CanBeBlank:         false,
 				OverwriteOnUpgrade: false,
@@ -80,7 +80,7 @@ func NewGethConfig() *GethConfig {
 			ParameterCommon: &ParameterCommon{
 				ID:                 ids.AdditionalFlagsID,
 				Name:               "Additional Flags",
-				Description:        "Additional custom command line flags you want to pass to Geth, to take advantage of other settings that Hyperdrive's configuration doesn't cover.",
+				Description:        "Additional custom command line flags you want to pass to Geth, to take advantage of other settings that aren't covered here.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
 				CanBeBlank:         true,
 				OverwriteOnUpgrade: false,

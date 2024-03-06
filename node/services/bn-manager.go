@@ -33,7 +33,7 @@ type bcFunction1 func(beacon.IBeaconClient) (interface{}, error)
 // This is a signature for a wrapped Beacon client function that returns 2 vars and an error
 type bcFunction2 func(beacon.IBeaconClient) (interface{}, interface{}, error)
 
-// Creates a new BeaconClientManager instance based on the Hyperdrive config
+// Creates a new BeaconClientManager instance
 func NewBeaconClientManager(primaryProvider string, fallbackProvider string, clientTimeout time.Duration) (*BeaconClientManager, error) {
 	var primaryBc beacon.IBeaconClient
 	var fallbackBc beacon.IBeaconClient

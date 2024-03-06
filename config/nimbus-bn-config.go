@@ -69,7 +69,7 @@ func NewNimbusBnConfig() *NimbusBnConfig {
 				{
 					ParameterOptionCommon: &ParameterOptionCommon{
 						Name:        "Pruned",
-						Description: "Nimbus will only keep the last 5 months of data available, and will delete everything older than that. This will make Nimbus use less disk space overall, but you won't be able to access state older than 5 months (such as regenerating old rewards trees).\n\n[orange]WARNING: Pruning an *existing* database will take a VERY long time when Nimbus first starts. If you change from Archive to Pruned, you should delete your old chain data and do a checkpoint sync using `hyperdrive service resync-eth2`. Make sure you have a checkpoint sync provider specified first!",
+						Description: "Nimbus will only keep the last 5 months of data available, and will delete everything older than that. This will make Nimbus use less disk space overall, but you won't be able to access state older than 5 months (such as regenerating old rewards trees).\n\n[orange]WARNING: Pruning an *existing* database will take a VERY long time when Nimbus first starts. If you change from Archive to Pruned, you should delete your old chain data and do a checkpoint sync. Make sure you have a checkpoint sync provider specified first!",
 					},
 					Value: Nimbus_PruningMode_Pruned,
 				}, {
@@ -104,7 +104,7 @@ func NewNimbusBnConfig() *NimbusBnConfig {
 			ParameterCommon: &ParameterCommon{
 				ID:                 ids.AdditionalFlagsID,
 				Name:               "Additional Flags",
-				Description:        "Additional custom command line flags you want to pass Nimbus's Beacon Client, to take advantage of other settings that Hyperdrive's configuration doesn't cover.",
+				Description:        "Additional custom command line flags you want to pass Nimbus's Beacon Client, to take advantage of other settings that aren't covered here.",
 				AffectsContainers:  []ContainerID{ContainerID_BeaconNode},
 				CanBeBlank:         true,
 				OverwriteOnUpgrade: false,

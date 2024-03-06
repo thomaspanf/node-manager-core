@@ -34,7 +34,7 @@ func NewMetricsConfig() *MetricsConfig {
 			ParameterCommon: &ParameterCommon{
 				ID:                 MetricsEnableID,
 				Name:               "Enable Metrics",
-				Description:        "Enable Hyperdrive's performance and status metrics system. This will provide you with the node operator's Grafana dashboard.",
+				Description:        "Enable the performance and status metrics system. This will provide you with the node operator's Grafana dashboard.",
 				AffectsContainers:  []ContainerID{ContainerID_Daemon, ContainerID_ExecutionClient, ContainerID_BeaconNode, ContainerID_ValidatorClient, ContainerID_Grafana, ContainerID_Prometheus, ContainerID_Exporter},
 				CanBeBlank:         false,
 				OverwriteOnUpgrade: false,
