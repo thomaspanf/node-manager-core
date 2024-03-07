@@ -57,22 +57,15 @@ type IRequester interface {
 	GetContext() *RequesterContext
 }
 
-// Binder for the NMC API server
-type ApiClient struct {
-	context *RequesterContext
-}
-
-// Creates a new API client instance
-func NewApiClient(baseRoute string, socketPath string, debugMode bool) *ApiClient {
-	client := &ApiClient{
-		context: &RequesterContext{
-			SocketPath: socketPath,
-			DebugMode:  debugMode,
-			Base:       baseRoute,
-		},
+// Creates a new API client context
+func NewRequesterContext(baseRoute string, socketPath string, debugMode bool) *RequesterContext {
+	requesterContext := &RequesterContext{
+		SocketPath: socketPath,
+		DebugMode:  debugMode,
+		Base:       baseRoute,
 	}
 
-	client.context.Client = &http.Client{
+	requesterContext.Client = &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 				return net.Dial("unix", socketPath)
@@ -81,14 +74,9 @@ func NewApiClient(baseRoute string, socketPath string, debugMode bool) *ApiClien
 	}
 
 	log := log.NewColorLogger(apiColor)
-	client.context.Log = &log
+	requesterContext.Log = &log
 
-	return client
-}
-
-// Set debug mode
-func (c *ApiClient) SetDebug(debug bool) {
-	c.context.DebugMode = debug
+	return requesterContext
 }
 
 // Submit a GET request to the API server
