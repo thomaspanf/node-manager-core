@@ -31,6 +31,11 @@ func CreateTxSubmissionFromInfo(txInfo *TransactionInfo, err error) (*Transactio
 	}, nil
 }
 
+// Simple convenience method to add a contract call to a multicaller
+func AddCallToMulicaller(mc *batch.MultiCaller, contract *Contract, output any, method string, args ...any) {
+	mc.AddCall(contract.Address, contract.ABI, output, method, args...)
+}
+
 // Adds a collection of IQueryable calls to a multicall
 func AddQueryablesToMulticall(mc *batch.MultiCaller, queryables ...IQueryable) {
 	for _, queryable := range queryables {
