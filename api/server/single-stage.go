@@ -12,7 +12,7 @@ import (
 	batch "github.com/rocket-pool/batch-query"
 	"github.com/rocket-pool/node-manager-core/api/types"
 	"github.com/rocket-pool/node-manager-core/node/services"
-	nmc_utils "github.com/rocket-pool/node-manager-core/utils"
+	"github.com/rocket-pool/node-manager-core/utils"
 )
 
 // Wrapper for callbacks used by call runners that follow a common single-stage pattern:
@@ -159,7 +159,7 @@ func runSingleStageRoute[DataType any](ctx ISingleStageCallContext[DataType], se
 	if err != nil {
 		return nil, fmt.Errorf("error getting wallet status: %w", err)
 	}
-	if nmc_utils.IsWalletReady(walletStatus) {
+	if utils.IsWalletReady(walletStatus) {
 		var err error
 		opts, err = w.GetTransactor()
 		if err != nil {

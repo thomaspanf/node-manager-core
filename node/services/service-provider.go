@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	apiLogColor    color.Attribute = color.FgHiCyan
-	walletLogColor color.Attribute = color.FgYellow
+	DockerApiVersion string          = "1.40"
+	apiLogColor      color.Attribute = color.FgHiCyan
+	walletLogColor   color.Attribute = color.FgYellow
 )
 
 // A container for all of the various services used by the node service
@@ -68,7 +69,7 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMo
 	}
 
 	// Docker client
-	dockerClient, err := client.NewClientWithOpts(client.WithVersion(config.DockerApiVersion))
+	dockerClient, err := client.NewClientWithOpts(client.WithVersion(DockerApiVersion))
 	if err != nil {
 		return nil, fmt.Errorf("error creating Docker client: %w", err)
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/goccy/go-json"
 	"github.com/rocket-pool/node-manager-core/node/services"
-	nmc_utils "github.com/rocket-pool/node-manager-core/utils"
+	"github.com/rocket-pool/node-manager-core/utils"
 
 	"github.com/gorilla/mux"
 )
@@ -146,7 +146,7 @@ func runQuerylessRoute[DataType any](ctx IQuerylessCallContext[DataType], servic
 	if err != nil {
 		return nil, fmt.Errorf("error getting wallet status: %w", err)
 	}
-	if nmc_utils.IsWalletReady(walletStatus) {
+	if utils.IsWalletReady(walletStatus) {
 		var err error
 		opts, err = w.GetTransactor()
 		if err != nil {

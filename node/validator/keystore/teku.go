@@ -8,7 +8,7 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/google/uuid"
 	"github.com/rocket-pool/node-manager-core/beacon"
-	nmc_utils "github.com/rocket-pool/node-manager-core/utils"
+	"github.com/rocket-pool/node-manager-core/utils"
 	eth2types "github.com/wealdtech/go-eth2-types/v2"
 	eth2ks "github.com/wealdtech/go-eth2-wallet-encryptor-keystorev4"
 )
@@ -42,7 +42,7 @@ func (ks *TekuKeystoreManager) StoreValidatorKey(key *eth2types.BLSPrivateKey, d
 	pubkey := beacon.ValidatorPubkey(key.PublicKey().Marshal())
 
 	// Create a new password
-	password, err := nmc_utils.GenerateRandomPassword()
+	password, err := utils.GenerateRandomPassword()
 	if err != nil {
 		return fmt.Errorf("error generating random password: %w", err)
 	}

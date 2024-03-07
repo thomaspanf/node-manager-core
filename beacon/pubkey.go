@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/goccy/go-json"
-	nmc_utils "github.com/rocket-pool/node-manager-core/utils"
+	"github.com/rocket-pool/node-manager-core/utils"
 	"gopkg.in/yaml.v3"
 )
 
@@ -23,7 +23,7 @@ func (v ValidatorPubkey) Hex() string {
 
 // Gets the string representation of the pubkey with a 0x prefix.
 func (v ValidatorPubkey) HexWithPrefix() string {
-	return nmc_utils.EncodeHexWithPrefix(v[:])
+	return utils.EncodeHexWithPrefix(v[:])
 }
 
 // Gets the string representation of the pubkey without a 0x prefix.
@@ -34,7 +34,7 @@ func (v ValidatorPubkey) String() string {
 // Converts a hex-encoded validator pubkey (with an optional 0x prefix) to a validator pubkey.
 func HexToValidatorPubkey(value string) (ValidatorPubkey, error) {
 	// Decode the value
-	bytes, err := nmc_utils.DecodeHex(value)
+	bytes, err := utils.DecodeHex(value)
 	if err != nil {
 		return ValidatorPubkey{}, fmt.Errorf("error decoding validator pubkey: %w", err)
 	}

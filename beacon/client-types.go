@@ -5,7 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
-	nmc_utils "github.com/rocket-pool/node-manager-core/utils"
+	"github.com/rocket-pool/node-manager-core/utils"
 )
 
 // Request types
@@ -170,7 +170,7 @@ func (i *uinteger) UnmarshalJSON(data []byte) error {
 type byteArray []byte
 
 func (b byteArray) MarshalJSON() ([]byte, error) {
-	return json.Marshal(nmc_utils.EncodeHexWithPrefix(b))
+	return json.Marshal(utils.EncodeHexWithPrefix(b))
 }
 func (b *byteArray) UnmarshalJSON(data []byte) error {
 
@@ -181,7 +181,7 @@ func (b *byteArray) UnmarshalJSON(data []byte) error {
 	}
 
 	// Decode hex
-	value, err := nmc_utils.DecodeHex(dataStr)
+	value, err := utils.DecodeHex(dataStr)
 	if err != nil {
 		return err
 	}

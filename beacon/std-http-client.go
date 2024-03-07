@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls"
-	nmc_utils "github.com/rocket-pool/node-manager-core/utils"
+	"github.com/rocket-pool/node-manager-core/utils"
 	eth2types "github.com/wealdtech/go-eth2-types/v2"
 	"golang.org/x/sync/errgroup"
 )
@@ -466,7 +466,7 @@ func (c *StandardHttpClient) GetAttestations(ctx context.Context, blockId string
 	// Add attestation info
 	attestationInfo := make([]AttestationInfo, len(attestations.Data))
 	for i, attestation := range attestations.Data {
-		bitString := nmc_utils.RemovePrefix(attestation.AggregationBits)
+		bitString := utils.RemovePrefix(attestation.AggregationBits)
 		attestationInfo[i].SlotIndex = uint64(attestation.Data.Slot)
 		attestationInfo[i].CommitteeIndex = uint64(attestation.Data.Index)
 		attestationInfo[i].AggregationBits, err = hex.DecodeString(bitString)
@@ -503,7 +503,7 @@ func (c *StandardHttpClient) GetBeaconBlock(ctx context.Context, blockId string)
 
 	// Add attestation info
 	for i, attestation := range block.Data.Message.Body.Attestations {
-		bitString := nmc_utils.RemovePrefix(attestation.AggregationBits)
+		bitString := utils.RemovePrefix(attestation.AggregationBits)
 		info := AttestationInfo{
 			SlotIndex:      uint64(attestation.Data.Slot),
 			CommitteeIndex: uint64(attestation.Data.Index),

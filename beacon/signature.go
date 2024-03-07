@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/goccy/go-json"
-	nmc_utils "github.com/rocket-pool/node-manager-core/utils"
+	"github.com/rocket-pool/node-manager-core/utils"
 	"gopkg.in/yaml.v3"
 )
 
@@ -23,7 +23,7 @@ func (v ValidatorSignature) Hex() string {
 
 // Gets the string representation of the signature with a 0x prefix.
 func (v ValidatorSignature) HexWithPrefix() string {
-	return nmc_utils.EncodeHexWithPrefix(v[:])
+	return utils.EncodeHexWithPrefix(v[:])
 }
 
 // Gets the string representation of the signature without a 0x prefix.
@@ -34,7 +34,7 @@ func (v ValidatorSignature) String() string {
 // Converts a hex-encoded validator signature (with an optional 0x prefix) to a validator signature.
 func HexToValidatorSignature(value string) (ValidatorSignature, error) {
 	// Decode the value
-	bytes, err := nmc_utils.DecodeHex(value)
+	bytes, err := utils.DecodeHex(value)
 	if err != nil {
 		return ValidatorSignature{}, fmt.Errorf("error decoding validator signature: %w", err)
 	}

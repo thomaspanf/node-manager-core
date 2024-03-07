@@ -1,4 +1,4 @@
-package nmc_utils
+package utils
 
 import (
 	"encoding/hex"
