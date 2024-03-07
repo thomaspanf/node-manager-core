@@ -24,7 +24,7 @@ type IHandler interface {
 	RegisterRoutes(router *mux.Router)
 }
 
-type ApiManager struct {
+type ApiServer struct {
 	log        log.ColorLogger
 	handlers   []IHandler
 	socketPath string
@@ -33,12 +33,12 @@ type ApiManager struct {
 	router     *mux.Router
 }
 
-func NewApiServer(socketPath string, handlers []IHandler, route string) (*ApiManager, error) {
+func NewApiServer(socketPath string, handlers []IHandler, route string) (*ApiServer, error) {
 	// Create the router
 	router := mux.NewRouter()
 
 	// Create the manager
-	mgr := &ApiManager{
+	server := &ApiServer{
 		log:        log.NewColorLogger(ApiLogColor),
 		handlers:   handlers,
 		socketPath: socketPath,
@@ -50,7 +50,7 @@ func NewApiServer(socketPath string, handlers []IHandler, route string) (*ApiMan
 
 	// Register each route
 	nmcRouter := router.Host(route).Subrouter()
-	for _, handler := range mgr.handlers {
+	for _, handler := range server.handlers {
 		handler.RegisterRoutes(nmcRouter)
 	}
 
@@ -61,44 +61,44 @@ func NewApiServer(socketPath string, handlers []IHandler, route string) (*ApiMan
 		return nil, fmt.Errorf("error creating socket directory [%s]: %w", socketDir, err)
 	}
 
-	return mgr, nil
+	return server, nil
 }
 
 // Starts listening for incoming HTTP requests
-func (m *ApiManager) Start(wg *sync.WaitGroup, socketOwnerUid uint32, socketOwnerGid uint32) error {
+func (s *ApiServer) Start(wg *sync.WaitGroup, socketOwnerUid uint32, socketOwnerGid uint32) error {
 	// Remove the socket if it's already there
-	_, err := os.Stat(m.socketPath)
+	_, err := os.Stat(s.socketPath)
 	if !errors.Is(err, fs.ErrNotExist) {
-		err = os.Remove(m.socketPath)
+		err = os.Remove(s.socketPath)
 		if err != nil {
 			return fmt.Errorf("error removing socket file: %w", err)
 		}
 	}
 
 	// Create the socket
-	socket, err := net.Listen("unix", m.socketPath)
+	socket, err := net.Listen("unix", s.socketPath)
 	if err != nil {
 		return fmt.Errorf("error creating socket: %w", err)
 	}
-	m.socket = socket
+	s.socket = socket
 
 	// Make it so only the user can write to the socket
-	err = os.Chmod(m.socketPath, 0600)
+	err = os.Chmod(s.socketPath, 0600)
 	if err != nil {
 		return fmt.Errorf("error setting permissions on socket: %w", err)
 	}
 
 	// Set the socket owner to the config file user
-	err = os.Chown(m.socketPath, int(socketOwnerUid), int(socketOwnerGid))
+	err = os.Chown(s.socketPath, int(socketOwnerUid), int(socketOwnerGid))
 	if err != nil {
 		return fmt.Errorf("error setting socket owner: %w", err)
 	}
 
 	// Start listening
 	go func() {
-		err := m.server.Serve(socket)
+		err := s.server.Serve(socket)
 		if !errors.Is(err, http.ErrServerClosed) {
-			m.log.Printlnf("error while listening for HTTP requests: %s", err.Error())
+			s.log.Printlnf("error while listening for HTTP requests: %s", err.Error())
 		}
 		wg.Done()
 	}()
@@ -108,8 +108,8 @@ func (m *ApiManager) Start(wg *sync.WaitGroup, socketOwnerUid uint32, socketOwne
 }
 
 // Stops the HTTP listener
-func (m *ApiManager) Stop() error {
-	err := m.server.Shutdown(context.Background())
+func (s *ApiServer) Stop() error {
+	err := s.server.Shutdown(context.Background())
 	if err != nil {
 		return fmt.Errorf("error stopping listener: %w", err)
 	}
