@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/goccy/go-json"
-	"github.com/rocket-pool/node-manager-core/api"
+	"github.com/rocket-pool/node-manager-core/api/types"
 	"github.com/rocket-pool/node-manager-core/beacon"
 	"github.com/rocket-pool/node-manager-core/utils/log"
 
@@ -92,7 +92,7 @@ func (c *ApiClient) SetDebug(debug bool) {
 }
 
 // Submit a GET request to the API server
-func SendGetRequest[DataType any](r IRequester, method string, requestName string, args map[string]string) (*api.ApiResponse[DataType], error) {
+func SendGetRequest[DataType any](r IRequester, method string, requestName string, args map[string]string) (*types.ApiResponse[DataType], error) {
 	if args == nil {
 		args = map[string]string{}
 	}
@@ -104,7 +104,7 @@ func SendGetRequest[DataType any](r IRequester, method string, requestName strin
 }
 
 // Submit a GET request to the API server
-func RawGetRequest[DataType any](context *RequesterContext, path string, params map[string]string) (*api.ApiResponse[DataType], error) {
+func RawGetRequest[DataType any](context *RequesterContext, path string, params map[string]string) (*types.ApiResponse[DataType], error) {
 	// Make sure the socket exists
 	_, err := os.Stat(context.SocketPath)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -135,7 +135,7 @@ func RawGetRequest[DataType any](context *RequesterContext, path string, params 
 }
 
 // Submit a POST request to the API server
-func SendPostRequest[DataType any](r IRequester, method string, requestName string, body any) (*api.ApiResponse[DataType], error) {
+func SendPostRequest[DataType any](r IRequester, method string, requestName string, body any) (*types.ApiResponse[DataType], error) {
 	// Serialize the body
 	bytes, err := json.Marshal(body)
 	if err != nil {
@@ -150,7 +150,7 @@ func SendPostRequest[DataType any](r IRequester, method string, requestName stri
 }
 
 // Submit a POST request to the API server
-func RawPostRequest[DataType any](context *RequesterContext, path string, body string) (*api.ApiResponse[DataType], error) {
+func RawPostRequest[DataType any](context *RequesterContext, path string, body string) (*types.ApiResponse[DataType], error) {
 	// Make sure the socket exists
 	_, err := os.Stat(context.SocketPath)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -168,7 +168,7 @@ func RawPostRequest[DataType any](context *RequesterContext, path string, body s
 }
 
 // Processes a response to a request
-func HandleResponse[DataType any](context *RequesterContext, resp *http.Response, path string, err error) (*api.ApiResponse[DataType], error) {
+func HandleResponse[DataType any](context *RequesterContext, resp *http.Response, path string, err error) (*types.ApiResponse[DataType], error) {
 	if err != nil {
 		return nil, fmt.Errorf("error requesting %s: %w", path, err)
 	}
@@ -195,7 +195,7 @@ func HandleResponse[DataType any](context *RequesterContext, resp *http.Response
 	}
 
 	// Deserialize the response into the provided type
-	var parsedResponse api.ApiResponse[DataType]
+	var parsedResponse types.ApiResponse[DataType]
 	err = json.Unmarshal(bytes, &parsedResponse)
 	if err != nil {
 		return nil, fmt.Errorf("error deserializing response to %s: %w; original body: [%s]", path, err, string(bytes))

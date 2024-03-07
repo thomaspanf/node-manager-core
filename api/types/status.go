@@ -1,4 +1,4 @@
-package services
+package types
 
 // This is a wrapper for the EC / BN status report
 type ClientStatus struct {

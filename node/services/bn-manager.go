@@ -10,6 +10,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/fatih/color"
+	"github.com/rocket-pool/node-manager-core/api/types"
 	"github.com/rocket-pool/node-manager-core/beacon"
 	"github.com/rocket-pool/node-manager-core/utils/log"
 )
@@ -248,8 +249,8 @@ func (m *BeaconClientManager) ChangeWithdrawalCredentials(ctx context.Context, v
 /// Internal Functions
 /// ==================
 
-func (m *BeaconClientManager) CheckStatus(ctx context.Context) *ClientManagerStatus {
-	status := &ClientManagerStatus{
+func (m *BeaconClientManager) CheckStatus(ctx context.Context) *types.ClientManagerStatus {
+	status := &types.ClientManagerStatus{
 		FallbackEnabled: m.fallbackBc != nil,
 	}
 
@@ -280,8 +281,8 @@ func (m *BeaconClientManager) CheckStatus(ctx context.Context) *ClientManagerSta
 }
 
 // Check the client status
-func checkBcStatus(ctx context.Context, client beacon.IBeaconClient) ClientStatus {
-	status := ClientStatus{}
+func checkBcStatus(ctx context.Context, client beacon.IBeaconClient) types.ClientStatus {
+	status := types.ClientStatus{}
 
 	// Get the fallback's sync progress
 	syncStatus, err := client.GetSyncStatus(ctx)

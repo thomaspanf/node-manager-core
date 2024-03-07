@@ -10,7 +10,7 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/gorilla/mux"
 	batch "github.com/rocket-pool/batch-query"
-	"github.com/rocket-pool/node-manager-core/api"
+	"github.com/rocket-pool/node-manager-core/api/types"
 	"github.com/rocket-pool/node-manager-core/node/services"
 	nmc_utils "github.com/rocket-pool/node-manager-core/utils"
 )
@@ -133,7 +133,7 @@ func RegisterSingleStagePost[ContextType ISingleStageCallContext[DataType], Body
 }
 
 // Run a route registered with the common single-stage querying pattern
-func runSingleStageRoute[DataType any](ctx ISingleStageCallContext[DataType], serviceProvider *services.ServiceProvider) (*api.ApiResponse[DataType], error) {
+func runSingleStageRoute[DataType any](ctx ISingleStageCallContext[DataType], serviceProvider *services.ServiceProvider) (*types.ApiResponse[DataType], error) {
 	// Get the services
 	w := serviceProvider.GetWallet()
 	q := serviceProvider.GetQueryManager()
@@ -169,7 +169,7 @@ func runSingleStageRoute[DataType any](ctx ISingleStageCallContext[DataType], se
 
 	// Create the response and data
 	data := new(DataType)
-	response := &api.ApiResponse[DataType]{
+	response := &types.ApiResponse[DataType]{
 		Data: data,
 	}
 

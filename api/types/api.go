@@ -1,4 +1,4 @@
-package api
+package types
 
 import (
 	"github.com/rocket-pool/node-manager-core/eth"

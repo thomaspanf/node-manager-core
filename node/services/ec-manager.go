@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/fatih/color"
+	apitypes "github.com/rocket-pool/node-manager-core/api/types"
 	"github.com/rocket-pool/node-manager-core/eth"
 	"github.com/rocket-pool/node-manager-core/utils/log"
 )
@@ -323,8 +324,8 @@ func (m *ExecutionClientManager) SyncProgress(ctx context.Context) (*ethereum.Sy
 /// Internal functions
 /// ==================
 
-func (m *ExecutionClientManager) CheckStatus(ctx context.Context) *ClientManagerStatus {
-	status := &ClientManagerStatus{
+func (m *ExecutionClientManager) CheckStatus(ctx context.Context) *apitypes.ClientManagerStatus {
+	status := &apitypes.ClientManagerStatus{
 		FallbackEnabled: m.fallbackEc != nil,
 	}
 
@@ -367,8 +368,8 @@ func getNetworkNameFromId(networkId uint) string {
 }
 
 // Check the client status
-func checkEcStatus(ctx context.Context, client *ethclient.Client) ClientStatus {
-	status := ClientStatus{}
+func checkEcStatus(ctx context.Context, client *ethclient.Client) apitypes.ClientStatus {
+	status := apitypes.ClientStatus{}
 
 	// Get the NetworkId
 	networkId, err := client.NetworkID(ctx)
