@@ -1,4 +1,4 @@
-package beacon
+package client
 
 import (
 	"bytes"
@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/goccy/go-json"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls"
+	"github.com/rocket-pool/node-manager-core/beacon"
 	"github.com/rocket-pool/node-manager-core/utils"
 	eth2types "github.com/wealdtech/go-eth2-types/v2"
 	"golang.org/x/sync/errgroup"
@@ -64,19 +65,19 @@ func (c *StandardHttpClient) Close(ctx context.Context) error {
 }
 
 // Get the node's sync status
-func (c *StandardHttpClient) GetSyncStatus(ctx context.Context) (SyncStatus, error) {
+func (c *StandardHttpClient) GetSyncStatus(ctx context.Context) (beacon.SyncStatus, error) {
 
 	// Get sync status
 	syncStatus, err := c.getSyncStatus(ctx)
 	if err != nil {
-		return SyncStatus{}, err
+		return beacon.SyncStatus{}, err
 	}
 
 	// Calculate the progress
 	progress := float64(syncStatus.Data.HeadSlot) / float64(syncStatus.Data.HeadSlot+syncStatus.Data.SyncDistance)
 
 	// Return response
-	return SyncStatus{
+	return beacon.SyncStatus{
 		Syncing:  syncStatus.Data.IsSyncing,
 		Progress: progress,
 	}, nil
@@ -84,7 +85,7 @@ func (c *StandardHttpClient) GetSyncStatus(ctx context.Context) (SyncStatus, err
 }
 
 // Get the eth2 config
-func (c *StandardHttpClient) GetEth2Config(ctx context.Context) (Eth2Config, error) {
+func (c *StandardHttpClient) GetEth2Config(ctx context.Context) (beacon.Eth2Config, error) {
 
 	// Data
 	var wg errgroup.Group
@@ -107,11 +108,11 @@ func (c *StandardHttpClient) GetEth2Config(ctx context.Context) (Eth2Config, err
 
 	// Wait for data
 	if err := wg.Wait(); err != nil {
-		return Eth2Config{}, err
+		return beacon.Eth2Config{}, err
 	}
 
 	// Return response
-	return Eth2Config{
+	return beacon.Eth2Config{
 		GenesisForkVersion:           genesis.Data.GenesisForkVersion,
 		GenesisValidatorsRoot:        genesis.Data.GenesisValidatorsRoot,
 		GenesisEpoch:                 0,
@@ -125,27 +126,27 @@ func (c *StandardHttpClient) GetEth2Config(ctx context.Context) (Eth2Config, err
 }
 
 // Get the eth2 deposit contract info
-func (c *StandardHttpClient) GetEth2DepositContract(ctx context.Context) (Eth2DepositContract, error) {
+func (c *StandardHttpClient) GetEth2DepositContract(ctx context.Context) (beacon.Eth2DepositContract, error) {
 
 	// Get the deposit contract
 	depositContract, err := c.getEth2DepositContract(ctx)
 	if err != nil {
-		return Eth2DepositContract{}, err
+		return beacon.Eth2DepositContract{}, err
 	}
 
 	// Return response
-	return Eth2DepositContract{
+	return beacon.Eth2DepositContract{
 		ChainID: uint64(depositContract.Data.ChainID),
 		Address: depositContract.Data.Address,
 	}, nil
 }
 
 // Get the beacon head
-func (c *StandardHttpClient) GetBeaconHead(ctx context.Context) (BeaconHead, error) {
+func (c *StandardHttpClient) GetBeaconHead(ctx context.Context) (beacon.BeaconHead, error) {
 
 	// Data
 	var wg errgroup.Group
-	var eth2Config Eth2Config
+	var eth2Config beacon.Eth2Config
 	var finalityCheckpoints FinalityCheckpointsResponse
 
 	// Get eth2 config
@@ -164,11 +165,11 @@ func (c *StandardHttpClient) GetBeaconHead(ctx context.Context) (BeaconHead, err
 
 	// Wait for data
 	if err := wg.Wait(); err != nil {
-		return BeaconHead{}, err
+		return beacon.BeaconHead{}, err
 	}
 
 	// Return response
-	return BeaconHead{
+	return beacon.BeaconHead{
 		Epoch:                  epochAt(eth2Config, uint64(time.Now().Unix())),
 		FinalizedEpoch:         uint64(finalityCheckpoints.Data.Finalized.Epoch),
 		JustifiedEpoch:         uint64(finalityCheckpoints.Data.CurrentJustified.Epoch),
@@ -178,42 +179,42 @@ func (c *StandardHttpClient) GetBeaconHead(ctx context.Context) (BeaconHead, err
 }
 
 // Get a validator's status
-func (c *StandardHttpClient) GetValidatorStatus(ctx context.Context, pubkey ValidatorPubkey, opts *ValidatorStatusOptions) (ValidatorStatus, error) {
+func (c *StandardHttpClient) GetValidatorStatus(ctx context.Context, pubkey beacon.ValidatorPubkey, opts *beacon.ValidatorStatusOptions) (beacon.ValidatorStatus, error) {
 
 	return c.getValidatorStatus(ctx, pubkey.HexWithPrefix(), opts)
 
 }
-func (c *StandardHttpClient) GetValidatorStatusByIndex(ctx context.Context, index string, opts *ValidatorStatusOptions) (ValidatorStatus, error) {
+func (c *StandardHttpClient) GetValidatorStatusByIndex(ctx context.Context, index string, opts *beacon.ValidatorStatusOptions) (beacon.ValidatorStatus, error) {
 
 	return c.getValidatorStatus(ctx, index, opts)
 
 }
 
-func (c *StandardHttpClient) getValidatorStatus(ctx context.Context, pubkeyOrIndex string, opts *ValidatorStatusOptions) (ValidatorStatus, error) {
+func (c *StandardHttpClient) getValidatorStatus(ctx context.Context, pubkeyOrIndex string, opts *beacon.ValidatorStatusOptions) (beacon.ValidatorStatus, error) {
 
 	// Return zero status for null pubkeyOrIndex
 	if pubkeyOrIndex == "" {
-		return ValidatorStatus{}, nil
+		return beacon.ValidatorStatus{}, nil
 	}
 
 	// Get validator
 	validators, err := c.getValidatorsByOpts(ctx, []string{pubkeyOrIndex}, opts)
 	if err != nil {
-		return ValidatorStatus{}, err
+		return beacon.ValidatorStatus{}, err
 	}
 	if len(validators.Data) == 0 {
-		return ValidatorStatus{}, nil
+		return beacon.ValidatorStatus{}, nil
 	}
 	validator := validators.Data[0]
 
 	// Return response
-	return ValidatorStatus{
-		Pubkey:                     ValidatorPubkey(validator.Validator.Pubkey),
+	return beacon.ValidatorStatus{
+		Pubkey:                     beacon.ValidatorPubkey(validator.Validator.Pubkey),
 		Index:                      validator.Index,
 		WithdrawalCredentials:      common.BytesToHash(validator.Validator.WithdrawalCredentials),
 		Balance:                    uint64(validator.Balance),
 		EffectiveBalance:           uint64(validator.Validator.EffectiveBalance),
-		Status:                     ValidatorState(validator.Status),
+		Status:                     beacon.ValidatorState(validator.Status),
 		Slashed:                    validator.Validator.Slashed,
 		ActivationEligibilityEpoch: uint64(validator.Validator.ActivationEligibilityEpoch),
 		ActivationEpoch:            uint64(validator.Validator.ActivationEpoch),
@@ -225,13 +226,13 @@ func (c *StandardHttpClient) getValidatorStatus(ctx context.Context, pubkeyOrInd
 }
 
 // Get multiple validators' statuses
-func (c *StandardHttpClient) GetValidatorStatuses(ctx context.Context, pubkeys []ValidatorPubkey, opts *ValidatorStatusOptions) (map[ValidatorPubkey]ValidatorStatus, error) {
+func (c *StandardHttpClient) GetValidatorStatuses(ctx context.Context, pubkeys []beacon.ValidatorPubkey, opts *beacon.ValidatorStatusOptions) (map[beacon.ValidatorPubkey]beacon.ValidatorStatus, error) {
 
 	// The null validator pubkey
-	nullPubkey := ValidatorPubkey{}
+	nullPubkey := beacon.ValidatorPubkey{}
 
 	// Filter out null pubkeys
-	realPubkeys := []ValidatorPubkey{}
+	realPubkeys := []beacon.ValidatorPubkey{}
 	for _, pubkey := range pubkeys {
 		if !bytes.Equal(pubkey[:], nullPubkey[:]) {
 			// Teku doesn't like invalid pubkeys, so filter them out to make it consistent with other clients
@@ -254,7 +255,7 @@ func (c *StandardHttpClient) GetValidatorStatuses(ctx context.Context, pubkeys [
 	}
 
 	// Build validator status map
-	statuses := make(map[ValidatorPubkey]ValidatorStatus)
+	statuses := make(map[beacon.ValidatorPubkey]beacon.ValidatorStatus)
 	for _, validator := range validators.Data {
 
 		// Ignore empty pubkeys
@@ -263,16 +264,16 @@ func (c *StandardHttpClient) GetValidatorStatuses(ctx context.Context, pubkeys [
 		}
 
 		// Get validator pubkey
-		pubkey := ValidatorPubkey(validator.Validator.Pubkey)
+		pubkey := beacon.ValidatorPubkey(validator.Validator.Pubkey)
 
 		// Add status
-		statuses[pubkey] = ValidatorStatus{
-			Pubkey:                     ValidatorPubkey(validator.Validator.Pubkey),
+		statuses[pubkey] = beacon.ValidatorStatus{
+			Pubkey:                     beacon.ValidatorPubkey(validator.Validator.Pubkey),
 			Index:                      validator.Index,
 			WithdrawalCredentials:      common.BytesToHash(validator.Validator.WithdrawalCredentials),
 			Balance:                    uint64(validator.Balance),
 			EffectiveBalance:           uint64(validator.Validator.EffectiveBalance),
-			Status:                     ValidatorState(validator.Status),
+			Status:                     beacon.ValidatorState(validator.Status),
 			Slashed:                    validator.Validator.Slashed,
 			ActivationEligibilityEpoch: uint64(validator.Validator.ActivationEligibilityEpoch),
 			ActivationEpoch:            uint64(validator.Validator.ActivationEpoch),
@@ -284,7 +285,7 @@ func (c *StandardHttpClient) GetValidatorStatuses(ctx context.Context, pubkeys [
 	}
 
 	// Put an empty status in for null pubkeys
-	statuses[nullPubkey] = ValidatorStatus{}
+	statuses[nullPubkey] = beacon.ValidatorStatus{}
 
 	// Return
 	return statuses, nil
@@ -360,7 +361,7 @@ func (c *StandardHttpClient) GetValidatorProposerDuties(ctx context.Context, ind
 }
 
 // Get a validator's index
-func (c *StandardHttpClient) GetValidatorIndex(ctx context.Context, pubkey ValidatorPubkey) (string, error) {
+func (c *StandardHttpClient) GetValidatorIndex(ctx context.Context, pubkey beacon.ValidatorPubkey) (string, error) {
 
 	// Get validator
 	pubkeyString := pubkey.HexWithPrefix()
@@ -423,7 +424,7 @@ func (c *StandardHttpClient) GetDomainData(ctx context.Context, domainType []byt
 }
 
 // Perform a voluntary exit on a validator
-func (c *StandardHttpClient) ExitValidator(ctx context.Context, validatorIndex string, epoch uint64, signature ValidatorSignature) error {
+func (c *StandardHttpClient) ExitValidator(ctx context.Context, validatorIndex string, epoch uint64, signature beacon.ValidatorSignature) error {
 	return c.postVoluntaryExit(ctx, VoluntaryExitRequest{
 		Message: VoluntaryExitMessage{
 			Epoch:          uinteger(epoch),
@@ -434,19 +435,19 @@ func (c *StandardHttpClient) ExitValidator(ctx context.Context, validatorIndex s
 }
 
 // Get the ETH1 data for the target beacon block
-func (c *StandardHttpClient) GetEth1DataForEth2Block(ctx context.Context, blockId string) (Eth1Data, bool, error) {
+func (c *StandardHttpClient) GetEth1DataForEth2Block(ctx context.Context, blockId string) (beacon.Eth1Data, bool, error) {
 
 	// Get the Beacon block
 	block, exists, err := c.getBeaconBlock(ctx, blockId)
 	if err != nil {
-		return Eth1Data{}, false, err
+		return beacon.Eth1Data{}, false, err
 	}
 	if !exists {
-		return Eth1Data{}, false, nil
+		return beacon.Eth1Data{}, false, nil
 	}
 
 	// Convert the response to the eth1 data struct
-	return Eth1Data{
+	return beacon.Eth1Data{
 		DepositRoot:  common.BytesToHash(block.Data.Message.Body.Eth1Data.DepositRoot),
 		DepositCount: uint64(block.Data.Message.Body.Eth1Data.DepositCount),
 		BlockHash:    common.BytesToHash(block.Data.Message.Body.Eth1Data.BlockHash),
@@ -454,7 +455,7 @@ func (c *StandardHttpClient) GetEth1DataForEth2Block(ctx context.Context, blockI
 
 }
 
-func (c *StandardHttpClient) GetAttestations(ctx context.Context, blockId string) ([]AttestationInfo, bool, error) {
+func (c *StandardHttpClient) GetAttestations(ctx context.Context, blockId string) ([]beacon.AttestationInfo, bool, error) {
 	attestations, exists, err := c.getAttestations(ctx, blockId)
 	if err != nil {
 		return nil, false, err
@@ -464,7 +465,7 @@ func (c *StandardHttpClient) GetAttestations(ctx context.Context, blockId string
 	}
 
 	// Add attestation info
-	attestationInfo := make([]AttestationInfo, len(attestations.Data))
+	attestationInfo := make([]beacon.AttestationInfo, len(attestations.Data))
 	for i, attestation := range attestations.Data {
 		bitString := utils.RemovePrefix(attestation.AggregationBits)
 		attestationInfo[i].SlotIndex = uint64(attestation.Data.Slot)
@@ -478,16 +479,16 @@ func (c *StandardHttpClient) GetAttestations(ctx context.Context, blockId string
 	return attestationInfo, true, nil
 }
 
-func (c *StandardHttpClient) GetBeaconBlock(ctx context.Context, blockId string) (BeaconBlock, bool, error) {
+func (c *StandardHttpClient) GetBeaconBlock(ctx context.Context, blockId string) (beacon.BeaconBlock, bool, error) {
 	block, exists, err := c.getBeaconBlock(ctx, blockId)
 	if err != nil {
-		return BeaconBlock{}, false, err
+		return beacon.BeaconBlock{}, false, err
 	}
 	if !exists {
-		return BeaconBlock{}, false, nil
+		return beacon.BeaconBlock{}, false, nil
 	}
 
-	beaconBlock := BeaconBlock{
+	beaconBlock := beacon.BeaconBlock{
 		Slot:          uint64(block.Data.Message.Slot),
 		ProposerIndex: block.Data.Message.ProposerIndex,
 	}
@@ -504,13 +505,13 @@ func (c *StandardHttpClient) GetBeaconBlock(ctx context.Context, blockId string)
 	// Add attestation info
 	for i, attestation := range block.Data.Message.Body.Attestations {
 		bitString := utils.RemovePrefix(attestation.AggregationBits)
-		info := AttestationInfo{
+		info := beacon.AttestationInfo{
 			SlotIndex:      uint64(attestation.Data.Slot),
 			CommitteeIndex: uint64(attestation.Data.Index),
 		}
 		info.AggregationBits, err = hex.DecodeString(bitString)
 		if err != nil {
-			return BeaconBlock{}, false, fmt.Errorf("error decoding aggregation bits for attestation %d of block %s: %w", i, blockId, err)
+			return beacon.BeaconBlock{}, false, fmt.Errorf("error decoding aggregation bits for attestation %d of block %s: %w", i, blockId, err)
 		}
 		beaconBlock.Attestations = append(beaconBlock.Attestations, info)
 	}
@@ -519,7 +520,7 @@ func (c *StandardHttpClient) GetBeaconBlock(ctx context.Context, blockId string)
 }
 
 // Perform a withdrawal credentials change on a validator
-func (c *StandardHttpClient) ChangeWithdrawalCredentials(ctx context.Context, validatorIndex string, fromBlsPubkey ValidatorPubkey, toExecutionAddress common.Address, signature ValidatorSignature) error {
+func (c *StandardHttpClient) ChangeWithdrawalCredentials(ctx context.Context, validatorIndex string, fromBlsPubkey beacon.ValidatorPubkey, toExecutionAddress common.Address, signature beacon.ValidatorSignature) error {
 	return c.postWithdrawalCredentialsChange(ctx, BLSToExecutionChangeRequest{
 		Message: BLSToExecutionChangeMessage{
 			ValidatorIndex:     validatorIndex,
@@ -647,7 +648,7 @@ func (c *StandardHttpClient) getValidators(ctx context.Context, stateId string, 
 }
 
 // Get validators by pubkeys and status options
-func (c *StandardHttpClient) getValidatorsByOpts(ctx context.Context, pubkeysOrIndices []string, opts *ValidatorStatusOptions) (ValidatorsResponse, error) {
+func (c *StandardHttpClient) getValidatorsByOpts(ctx context.Context, pubkeysOrIndices []string, opts *beacon.ValidatorStatusOptions) (ValidatorsResponse, error) {
 
 	// Get state ID
 	var stateId string
@@ -853,6 +854,6 @@ func (c *StandardHttpClient) postRequest(ctx context.Context, requestPath string
 }
 
 // Get an eth2 epoch number by time
-func epochAt(config Eth2Config, time uint64) uint64 {
+func epochAt(config beacon.Eth2Config, time uint64) uint64 {
 	return config.GenesisEpoch + (time-config.GenesisTime)/config.SecondsPerEpoch
 }

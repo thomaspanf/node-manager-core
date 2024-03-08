@@ -12,6 +12,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/rocket-pool/node-manager-core/api/types"
 	"github.com/rocket-pool/node-manager-core/beacon"
+	"github.com/rocket-pool/node-manager-core/beacon/client"
 	"github.com/rocket-pool/node-manager-core/utils/log"
 )
 
@@ -38,9 +39,9 @@ type bcFunction2 func(beacon.IBeaconClient) (interface{}, interface{}, error)
 func NewBeaconClientManager(primaryProvider string, fallbackProvider string, clientTimeout time.Duration) (*BeaconClientManager, error) {
 	var primaryBc beacon.IBeaconClient
 	var fallbackBc beacon.IBeaconClient
-	primaryBc = beacon.NewStandardHttpClient(primaryProvider, clientTimeout)
+	primaryBc = client.NewStandardHttpClient(primaryProvider, clientTimeout)
 	if fallbackProvider != "" {
-		fallbackBc = beacon.NewStandardHttpClient(fallbackProvider, clientTimeout)
+		fallbackBc = client.NewStandardHttpClient(fallbackProvider, clientTimeout)
 	}
 
 	return &BeaconClientManager{
