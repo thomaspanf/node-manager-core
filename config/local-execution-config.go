@@ -175,9 +175,9 @@ func (cfg *LocalExecutionConfig) GetParameters() []IParameter {
 // Get the sections underneath this one
 func (cfg *LocalExecutionConfig) GetSubconfigs() map[string]IConfigSection {
 	return map[string]IConfigSection{
-		"besu":       cfg.Besu,
-		"geth":       cfg.Geth,
-		"nethermind": cfg.Nethermind,
+		ids.LocalExecution_BesuID:       cfg.Besu,
+		ids.LocalExecution_GethID:       cfg.Geth,
+		ids.LocalExecution_NethermindID: cfg.Nethermind,
 	}
 }
 

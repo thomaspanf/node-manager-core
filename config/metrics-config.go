@@ -1,5 +1,7 @@
 package config
 
+import "github.com/rocket-pool/node-manager-core/config/ids"
+
 // Constants
 const (
 	// Param IDs
@@ -143,9 +145,9 @@ func (cfg *MetricsConfig) GetParameters() []IParameter {
 // Get the sections underneath this one
 func (cfg *MetricsConfig) GetSubconfigs() map[string]IConfigSection {
 	return map[string]IConfigSection{
-		"grafana":    cfg.Grafana,
-		"prometheus": cfg.Prometheus,
-		"exporter":   cfg.Exporter,
-		"bitfly":     cfg.BitflyNodeMetrics,
+		ids.Metrics_GrafanaID:    cfg.Grafana,
+		ids.Metrics_PrometheusID: cfg.Prometheus,
+		ids.Metrics_ExporterID:   cfg.Exporter,
+		ids.Metrics_BitflyID:     cfg.BitflyNodeMetrics,
 	}
 }

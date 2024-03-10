@@ -173,11 +173,11 @@ func (cfg *LocalBeaconConfig) GetParameters() []IParameter {
 // Get the sections underneath this one
 func (cfg *LocalBeaconConfig) GetSubconfigs() map[string]IConfigSection {
 	return map[string]IConfigSection{
-		"lighthouse": cfg.Lighthouse,
-		"lodestar":   cfg.Lodestar,
-		"nimbus":     cfg.Nimbus,
-		"prysm":      cfg.Prysm,
-		"teku":       cfg.Teku,
+		ids.LocalBeacon_LighthouseID: cfg.Lighthouse,
+		ids.LocalBeacon_LodestarID:   cfg.Lodestar,
+		ids.LocalBeacon_NimbusID:     cfg.Nimbus,
+		ids.LocalBeacon_PrysmID:      cfg.Prysm,
+		ids.LocalBeacon_TekuID:       cfg.Teku,
 	}
 }
 
