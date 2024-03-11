@@ -6,11 +6,6 @@ import (
 
 // Constants
 const (
-	// Param IDs
-	BesuJvmHeapSizeID   string = "jvmHeapSize"
-	BesuMaxPeersID      string = "maxPeers"
-	BesuMaxBackLayersID string = "maxBackLayers"
-
 	// Tags
 	besuTagTest string = "hyperledger/besu:24.1.1"
 	besuTagProd string = "hyperledger/besu:24.1.1"
@@ -39,7 +34,7 @@ func NewBesuConfig() *BesuConfig {
 	return &BesuConfig{
 		JvmHeapSize: Parameter[uint64]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 BesuJvmHeapSizeID,
+				ID:                 ids.BesuJvmHeapSizeID,
 				Name:               "JVM Heap Size",
 				Description:        "The max amount of RAM, in MB, that Besu's JVM should limit itself to. Setting this lower will cause Besu to use less RAM, though it will always use more than this limit.\n\nUse 0 for automatic allocation.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
@@ -53,7 +48,7 @@ func NewBesuConfig() *BesuConfig {
 
 		MaxPeers: Parameter[uint16]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 BesuMaxPeersID,
+				ID:                 ids.BesuMaxPeersID,
 				Name:               "Max Peers",
 				Description:        "The maximum number of peers Besu should connect to. This can be lowered to improve performance on low-power systems or constrained networks. We recommend keeping it at 12 or higher.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
@@ -67,7 +62,7 @@ func NewBesuConfig() *BesuConfig {
 
 		MaxBackLayers: Parameter[uint64]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 BesuMaxBackLayersID,
+				ID:                 ids.BesuMaxBackLayersID,
 				Name:               "Historical Block Replay Limit",
 				Description:        "Besu has the ability to revisit the state of any historical block on the chain by \"replaying\" all of the previous blocks to get back to the target. This limit controls how many blocks you can replay - in other words, how far back Besu can go in time. Normal Execution client processing will be paused while a replay is in progress.\n\n[orange]NOTE: If you try to replay a state from a long time ago, it may take Besu several minutes to rebuild the state!",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},

@@ -9,9 +9,6 @@ import (
 
 // Constants
 const (
-	// Param IDs
-	GethEnablePbssID string = "enablePbss"
-
 	// Tags
 	gethTagProd string = "ethereum/client-go:v1.13.11"
 	gethTagTest string = "ethereum/client-go:v1.13.11"
@@ -37,7 +34,7 @@ func NewGethConfig() *GethConfig {
 	return &GethConfig{
 		EnablePbss: Parameter[bool]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 GethEnablePbssID,
+				ID:                 ids.GethEnablePbssID,
 				Name:               "Enable PBSS",
 				Description:        "Enable Geth's new path-based state scheme. With this enabled, you will no longer need to manually prune Geth; it will automatically prune its database in real-time.\n\n[orange]NOTE:\nEnabling this will require you to remove and resync your Geth DB.\nYou will need a synced fallback node configured before doing this, or you will no longer be able to attest until it has finished resyncing!",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},

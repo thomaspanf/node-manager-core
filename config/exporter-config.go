@@ -5,9 +5,6 @@ import (
 )
 
 const (
-	// Param IDs
-	ExporterEnableRootFsID string = "enableRootFs"
-
 	// Tags
 	exporterTag string = "prom/node-exporter:v1.7.0"
 )
@@ -29,7 +26,7 @@ func NewExporterConfig() *ExporterConfig {
 	return &ExporterConfig{
 		RootFs: Parameter[bool]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 ExporterEnableRootFsID,
+				ID:                 ids.ExporterEnableRootFsID,
 				Name:               "Allow Root Filesystem Access",
 				Description:        "Give Prometheus's Node Exporter permission to view your root filesystem instead of being limited to its own Docker container.\nThis is needed if you want the Grafana dashboard to report the used disk space of a second SSD.",
 				AffectsContainers:  []ContainerID{ContainerID_Exporter},

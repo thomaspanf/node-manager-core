@@ -10,12 +10,6 @@ import (
 
 // Constants
 const (
-	// Param IDs
-	NethermindCacheSizeID         string = "cacheSize"
-	NethermindPruneMemSizeID      string = "pruneMemSize"
-	NethermindAdditionalModulesID string = "additionalModules"
-	NethermindAdditionalUrlsID    string = "additionalUrls"
-
 	// Tags
 	nethermindTagProd string = "nethermind/nethermind:1.25.3"
 	nethermindTagTest string = "nethermind/nethermind:1.25.3"
@@ -50,7 +44,7 @@ func NewNethermindConfig() *NethermindConfig {
 	return &NethermindConfig{
 		CacheSize: Parameter[uint64]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 NethermindCacheSizeID,
+				ID:                 ids.NethermindCacheSizeID,
 				Name:               "Cache (Memory Hint) Size",
 				Description:        "The amount of RAM (in MB) you want to suggest for Nethermind's cache. While there is no guarantee that Nethermind will stay under this limit, lower values are preferred for machines with less RAM.\n\nThe default value for this will be calculated dynamically based on your system's available RAM, but you can adjust it manually.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
@@ -78,7 +72,7 @@ func NewNethermindConfig() *NethermindConfig {
 
 		PruneMemSize: Parameter[uint64]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 NethermindPruneMemSizeID,
+				ID:                 ids.NethermindPruneMemSizeID,
 				Name:               "In-Memory Pruning Cache Size",
 				Description:        "The amount of RAM (in MB) you want to dedicate to Nethermind for its in-memory pruning system. Higher values mean less writes to your SSD and slower overall database growth.\n\nThe default value for this will be calculated dynamically based on your system's available RAM, but you can adjust it manually.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
@@ -92,7 +86,7 @@ func NewNethermindConfig() *NethermindConfig {
 
 		AdditionalModules: Parameter[string]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 NethermindAdditionalModulesID,
+				ID:                 ids.NethermindAdditionalModulesID,
 				Name:               "Additional Modules",
 				Description:        "Additional modules you want to add to the primary JSON-RPC route. The defaults are Eth,Net,Personal,Web3. You can add any additional ones you need here; separate multiple modules with commas, and do not use spaces.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
@@ -106,7 +100,7 @@ func NewNethermindConfig() *NethermindConfig {
 
 		AdditionalUrls: Parameter[string]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 NethermindAdditionalUrlsID,
+				ID:                 ids.NethermindAdditionalUrlsID,
 				Name:               "Additional URLs",
 				Description:        "Additional JSON-RPC URLs you want to run alongside the primary URL. These will be added to the \"--JsonRpc.AdditionalRpcUrls\" argument. Wrap each additional URL in quotes, and separate multiple URLs with commas (no spaces). Please consult the Nethermind documentation for more information on this flag, its intended usage, and its expected formatting.\n\nFor advanced users only.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},

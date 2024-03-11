@@ -6,10 +6,6 @@ import (
 )
 
 const (
-	// Param IDs
-	TekuJvmHeapSizeID string = "jvmHeapSize"
-	TekuArchiveModeID string = "archiveMode"
-
 	// Tags
 	tekuBnTagTest string = "consensys/teku:24.1.1"
 	tekuBnTagProd string = "consensys/teku:24.1.1"
@@ -38,7 +34,7 @@ func NewTekuBnConfig() *TekuBnConfig {
 	return &TekuBnConfig{
 		JvmHeapSize: Parameter[uint64]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 TekuJvmHeapSizeID,
+				ID:                 ids.TekuJvmHeapSizeID,
 				Name:               "JVM Heap Size",
 				Description:        "The max amount of RAM, in MB, that Teku's JVM should limit itself to. Setting this lower will cause Teku to use less RAM, though it will always use more than this limit.\n\nUse 0 for automatic allocation.",
 				AffectsContainers:  []ContainerID{ContainerID_BeaconNode},
@@ -66,7 +62,7 @@ func NewTekuBnConfig() *TekuBnConfig {
 
 		ArchiveMode: Parameter[bool]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 TekuArchiveModeID,
+				ID:                 ids.TekuArchiveModeID,
 				Name:               "Enable Archive Mode",
 				Description:        "When enabled, Teku will run in \"archive\" mode which means it can recreate the state of the Beacon chain for a previous block. This is required for manually generating the Merkle rewards tree.\n\nIf you are sure you will never be manually generating a tree, you can disable archive mode.",
 				AffectsContainers:  []ContainerID{ContainerID_BeaconNode},

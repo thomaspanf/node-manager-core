@@ -5,10 +5,6 @@ import (
 )
 
 const (
-	// Param IDs
-	PrysmRpcPortID     string = "rpcPort"
-	PrysmOpenRpcPortID string = "openRpcPort"
-
 	// Tags
 	prysmBnTagTest string = "rocketpool/prysm:v4.2.1"
 	prysmBnTagProd string = "rocketpool/prysm:v4.2.1"
@@ -51,7 +47,7 @@ func NewPrysmBnConfig() *PrysmBnConfig {
 
 		RpcPort: Parameter[uint16]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 PrysmRpcPortID,
+				ID:                 ids.PrysmRpcPortID,
 				Name:               "RPC Port",
 				Description:        "The port Prysm should run its JSON-RPC API on.",
 				AffectsContainers:  []ContainerID{ContainerID_BeaconNode, ContainerID_ValidatorClient},
@@ -65,7 +61,7 @@ func NewPrysmBnConfig() *PrysmBnConfig {
 
 		OpenRpcPort: Parameter[RpcPortMode]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 PrysmOpenRpcPortID,
+				ID:                 ids.PrysmOpenRpcPortID,
 				Name:               "Expose RPC Port",
 				Description:        "Expose Prysm's JSON-RPC port to other processes on your machine, or to your local network so other machines can access it too.",
 				AffectsContainers:  []ContainerID{ContainerID_BeaconNode},

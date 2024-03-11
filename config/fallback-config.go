@@ -1,11 +1,6 @@
 package config
 
-const (
-	// Param IDs
-	UseFallbackClientsID string = "useFallbackClients"
-	EcHttpUrl            string = "ecHttpUrl"
-	BnHttpUrl            string = "bnHttpUrl"
-)
+import "github.com/rocket-pool/node-manager-core/config/ids"
 
 // Fallback configuration
 type FallbackConfig struct {
@@ -27,7 +22,7 @@ func NewFallbackConfig() *FallbackConfig {
 	return &FallbackConfig{
 		UseFallbackClients: Parameter[bool]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 UseFallbackClientsID,
+				ID:                 ids.FallbackUseFallbackClientsID,
 				Name:               "Use Fallback Clients",
 				Description:        "Enable this if you would like to specify a fallback Execution and Beacon Node, which will temporarily be used by your node and Validator Client(s) if your primary Execution / Beacon Node pair ever go offline (e.g. if you switch, prune, or resync your clients).",
 				AffectsContainers:  []ContainerID{ContainerID_Daemon, ContainerID_ValidatorClient},
@@ -41,7 +36,7 @@ func NewFallbackConfig() *FallbackConfig {
 
 		EcHttpUrl: Parameter[string]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 EcHttpUrl,
+				ID:                 ids.FallbackEcHttpUrlID,
 				Name:               "Execution Client URL",
 				Description:        "The URL of the HTTP API endpoint for your fallback Execution client.\n\nNOTE: If you are running it on the same machine as your node, addresses like `localhost` and `127.0.0.1` will not work due to Docker limitations. Enter your machine's LAN IP address instead.",
 				AffectsContainers:  []ContainerID{ContainerID_Daemon},
@@ -55,7 +50,7 @@ func NewFallbackConfig() *FallbackConfig {
 
 		BnHttpUrl: Parameter[string]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 BnHttpUrl,
+				ID:                 ids.FallbackBnHttpUrlID,
 				Name:               "Beacon Node URL",
 				Description:        "The URL of the HTTP Beacon API endpoint for your fallback Beacon Node.\n\nNOTE: If you are running it on the same machine as your node, addresses like `localhost` and `127.0.0.1` will not work due to Docker limitations. Enter your machine's LAN IP address instead.",
 				AffectsContainers:  []ContainerID{ContainerID_Daemon, ContainerID_ValidatorClient},
@@ -69,7 +64,7 @@ func NewFallbackConfig() *FallbackConfig {
 
 		PrysmRpcUrl: Parameter[string]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 PrysmRpcUrlID,
+				ID:                 ids.ExternalBnPrysmRpcUrlID,
 				Name:               "RPC URL (Prysm Only)",
 				Description:        "**Only used if you have a Prysm Validator Client.**\n\nThe URL of Prysm's gRPC API endpoint for your fallback Beacon Node. Prysm's Validator Client will need this in order to connect to it.\nNOTE: If you are running it on the same machine as your node, addresses like `localhost` and `127.0.0.1` will not work due to Docker limitations. Enter your machine's LAN IP address instead.",
 				AffectsContainers:  []ContainerID{ContainerID_ValidatorClient},

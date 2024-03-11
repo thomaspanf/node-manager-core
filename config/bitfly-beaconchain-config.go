@@ -1,10 +1,7 @@
 package config
 
-// Defaults
-const (
-	BitflySecretID      string = "bitflySecret"
-	BitflyEndpointID    string = "bitflyEndpoint"
-	BitflyMachineNameID string = "bitflyMachineName"
+import (
+	"github.com/rocket-pool/node-manager-core/config/ids"
 )
 
 // Configuration for Bitfly Node Metrics
@@ -21,7 +18,7 @@ func NewBitflyNodeMetricsConfig() *BitflyNodeMetricsConfig {
 	return &BitflyNodeMetricsConfig{
 		Secret: Parameter[string]{
 			ParameterCommon: &ParameterCommon{
-				ID:                BitflySecretID,
+				ID:                ids.BitflySecretID,
 				Name:              "Beaconcha.in API Key",
 				Description:       "The API key used to authenticate your Beaconcha.in node metrics integration. Can be found in your Beaconcha.in account settings.\n\nPlease visit https://beaconcha.in/user/settings#api to access your account information.",
 				AffectsContainers: []ContainerID{ContainerID_BeaconNode, ContainerID_ValidatorClient},
@@ -37,7 +34,7 @@ func NewBitflyNodeMetricsConfig() *BitflyNodeMetricsConfig {
 
 		Endpoint: Parameter[string]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 BitflyEndpointID,
+				ID:                 ids.BitflyEndpointID,
 				Name:               "Node Metrics Endpoint",
 				Description:        "The endpoint to send your Beaconcha.in Node Metrics data to. Should be left as the default.",
 				AffectsContainers:  []ContainerID{ContainerID_BeaconNode, ContainerID_ValidatorClient},
@@ -51,7 +48,7 @@ func NewBitflyNodeMetricsConfig() *BitflyNodeMetricsConfig {
 
 		MachineName: Parameter[string]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 BitflyMachineNameID,
+				ID:                 ids.BitflyMachineNameID,
 				Name:               "Node Metrics Machine Name",
 				Description:        "The name of the machine you are running on. This is used to identify your machine in the mobile app.\nChange this if you are running multiple nodes with the same Secret.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient, ContainerID_ValidatorClient},

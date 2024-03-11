@@ -2,17 +2,6 @@ package config
 
 import "github.com/rocket-pool/node-manager-core/config/ids"
 
-// Constants
-const (
-	// Param IDs
-	MetricsEnableID       string = "enableMetrics"
-	MetricsEnableBitflyID string = "enableBitflyNodeMetrics"
-	MetricsEcPortID       string = "ecMetricsPort"
-	MetricsBnPortID       string = "bnMetricsPort"
-	MetricsDaemonPortID   string = "daemonMetricsPort"
-	MetricsExporterPortID string = "exporterMetricsPort"
-)
-
 // Configuration for Metrics
 type MetricsConfig struct {
 	EnableMetrics           Parameter[bool]
@@ -34,7 +23,7 @@ func NewMetricsConfig() *MetricsConfig {
 	cfg := &MetricsConfig{
 		EnableMetrics: Parameter[bool]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 MetricsEnableID,
+				ID:                 ids.MetricsEnableID,
 				Name:               "Enable Metrics",
 				Description:        "Enable the performance and status metrics system. This will provide you with the node operator's Grafana dashboard.",
 				AffectsContainers:  []ContainerID{ContainerID_Daemon, ContainerID_ExecutionClient, ContainerID_BeaconNode, ContainerID_ValidatorClient, ContainerID_Grafana, ContainerID_Prometheus, ContainerID_Exporter},
@@ -48,7 +37,7 @@ func NewMetricsConfig() *MetricsConfig {
 
 		EnableBitflyNodeMetrics: Parameter[bool]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 MetricsEnableBitflyID,
+				ID:                 ids.MetricsEnableBitflyID,
 				Name:               "Enable Beaconcha.in Node Metrics",
 				Description:        "Enable the Beaconcha.in node metrics integration. This will allow you to track your node's metrics from your phone using the Beaconcha.in App.\n\nFor more information on setting up an account and the app, please visit https://beaconcha.in/mobile.",
 				AffectsContainers:  []ContainerID{ContainerID_BeaconNode, ContainerID_ValidatorClient},
@@ -62,7 +51,7 @@ func NewMetricsConfig() *MetricsConfig {
 
 		EcMetricsPort: Parameter[uint16]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 MetricsEcPortID,
+				ID:                 ids.MetricsEcPortID,
 				Name:               "Execution Client Metrics Port",
 				Description:        "The port your Execution client should expose its metrics on.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient, ContainerID_Prometheus},
@@ -76,7 +65,7 @@ func NewMetricsConfig() *MetricsConfig {
 
 		BnMetricsPort: Parameter[uint16]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 MetricsBnPortID,
+				ID:                 ids.MetricsBnPortID,
 				Name:               "Beacon Node Metrics Port",
 				Description:        "The port your Beacon Node's Beacon Node should expose its metrics on.",
 				AffectsContainers:  []ContainerID{ContainerID_BeaconNode, ContainerID_Prometheus},
@@ -90,7 +79,7 @@ func NewMetricsConfig() *MetricsConfig {
 
 		DaemonMetricsPort: Parameter[uint16]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 MetricsDaemonPortID,
+				ID:                 ids.MetricsDaemonPortID,
 				Name:               "Daemon Metrics Port",
 				Description:        "The port your daemon container should expose its metrics on.",
 				AffectsContainers:  []ContainerID{ContainerID_Daemon, ContainerID_Prometheus},
@@ -104,7 +93,7 @@ func NewMetricsConfig() *MetricsConfig {
 
 		ExporterMetricsPort: Parameter[uint16]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 MetricsExporterPortID,
+				ID:                 ids.MetricsExporterPortID,
 				Name:               "Exporter Metrics Port",
 				Description:        "The port that Prometheus's Node Exporter should expose its metrics on.",
 				AffectsContainers:  []ContainerID{ContainerID_Exporter, ContainerID_Prometheus},
@@ -145,9 +134,9 @@ func (cfg *MetricsConfig) GetParameters() []IParameter {
 // Get the sections underneath this one
 func (cfg *MetricsConfig) GetSubconfigs() map[string]IConfigSection {
 	return map[string]IConfigSection{
-		ids.Metrics_GrafanaID:    cfg.Grafana,
-		ids.Metrics_PrometheusID: cfg.Prometheus,
-		ids.Metrics_ExporterID:   cfg.Exporter,
-		ids.Metrics_BitflyID:     cfg.BitflyNodeMetrics,
+		ids.MetricsGrafanaID:    cfg.Grafana,
+		ids.MetricsPrometheusID: cfg.Prometheus,
+		ids.MetricsExporterID:   cfg.Exporter,
+		ids.MetricsBitflyID:     cfg.BitflyNodeMetrics,
 	}
 }

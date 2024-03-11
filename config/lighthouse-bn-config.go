@@ -6,9 +6,6 @@ import (
 )
 
 const (
-	// Param IDs
-	LhQuicPortID string = "p2pQuicPort"
-
 	// Tags
 	lighthouseBnTagPortableTest string = "sigp/lighthouse:v4.6.0"
 	lighthouseBnTagPortableProd string = "sigp/lighthouse:v4.6.0"
@@ -36,7 +33,7 @@ func NewLighthouseBnConfig() *LighthouseBnConfig {
 	return &LighthouseBnConfig{
 		P2pQuicPort: Parameter[uint16]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 LhQuicPortID,
+				ID:                 ids.LighthouseQuicPortID,
 				Name:               "P2P QUIC Port",
 				Description:        "The port to use for P2P (blockchain) traffic using the QUIC protocol.",
 				AffectsContainers:  []ContainerID{ContainerID_BeaconNode},

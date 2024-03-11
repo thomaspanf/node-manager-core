@@ -6,13 +6,6 @@ import (
 	"github.com/rocket-pool/node-manager-core/config/ids"
 )
 
-const (
-	// Param IDs
-	EcWebsocketPortID string = "wsPort"
-	EcEnginePortID    string = "enginePort"
-	EcOpenApiPortsID  string = "openApiPorts"
-)
-
 // Configuration for the Execution client
 type LocalExecutionConfig struct {
 	// The selected EC
@@ -91,7 +84,7 @@ func NewLocalExecutionConfig() *LocalExecutionConfig {
 
 		WebsocketPort: Parameter[uint16]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 EcWebsocketPortID,
+				ID:                 ids.LocalEcWebsocketPortID,
 				Name:               "Websocket API Port",
 				Description:        "The port your Execution client should use for its Websocket API endpoint (also known as Websocket RPC API endpoint).",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
@@ -105,7 +98,7 @@ func NewLocalExecutionConfig() *LocalExecutionConfig {
 
 		EnginePort: Parameter[uint16]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 EcEnginePortID,
+				ID:                 ids.LocalEcEnginePortID,
 				Name:               "Engine API Port",
 				Description:        "The port your Execution client should use for its Engine API endpoint (the endpoint the Beacon Node will connect to post-merge).",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient, ContainerID_BeaconNode},
@@ -119,7 +112,7 @@ func NewLocalExecutionConfig() *LocalExecutionConfig {
 
 		OpenApiPorts: Parameter[RpcPortMode]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 EcOpenApiPortsID,
+				ID:                 ids.LocalEcOpenApiPortsID,
 				Name:               "Expose API Ports",
 				Description:        "Expose the HTTP and Websocket API ports to other processes on your machine, or to your local network so other machines can access your Execution Client's API endpoints.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
@@ -175,9 +168,9 @@ func (cfg *LocalExecutionConfig) GetParameters() []IParameter {
 // Get the sections underneath this one
 func (cfg *LocalExecutionConfig) GetSubconfigs() map[string]IConfigSection {
 	return map[string]IConfigSection{
-		ids.LocalExecution_BesuID:       cfg.Besu,
-		ids.LocalExecution_GethID:       cfg.Geth,
-		ids.LocalExecution_NethermindID: cfg.Nethermind,
+		ids.LocalEcBesuID:       cfg.Besu,
+		ids.LocalEcGethID:       cfg.Geth,
+		ids.LocalEcNethermindID: cfg.Nethermind,
 	}
 }
 

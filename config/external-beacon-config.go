@@ -4,11 +4,6 @@ import (
 	"github.com/rocket-pool/node-manager-core/config/ids"
 )
 
-const (
-	// Param IDs
-	PrysmRpcUrlID string = "prysmRpcUrl"
-)
-
 // Configuration for external Beacon Nodes
 type ExternalBeaconConfig struct {
 	// The selected BN
@@ -86,7 +81,7 @@ func NewExternalBeaconConfig() *ExternalBeaconConfig {
 
 		PrysmRpcUrl: Parameter[string]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 PrysmRpcUrlID,
+				ID:                 ids.ExternalBnPrysmRpcUrlID,
 				Name:               "Prysm RPC URL",
 				Description:        "The URL of Prysm's gRPC API endpoint for your external Beacon Node. Prysm's Validator Client will need this in order to connect to it.\nNOTE: If you are running it on the same machine as this node, addresses like `localhost` and `127.0.0.1` will not work due to Docker limitations. Enter your machine's LAN IP address instead.",
 				AffectsContainers:  []ContainerID{ContainerID_ValidatorClient},

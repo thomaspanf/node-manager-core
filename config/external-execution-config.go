@@ -4,11 +4,6 @@ import (
 	"github.com/rocket-pool/node-manager-core/config/ids"
 )
 
-const (
-	// Param IDs
-	WebsocketUrlID string = "wsUrl"
-)
-
 // Configuration for external Execution clients
 type ExternalExecutionConfig struct {
 	// The selected EC
@@ -73,7 +68,7 @@ func NewExternalExecutionConfig() *ExternalExecutionConfig {
 
 		WebsocketUrl: Parameter[string]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 WebsocketUrlID,
+				ID:                 ids.ExternalEcWebsocketUrlID,
 				Name:               "Websocket URL",
 				Description:        "The URL of the Websocket RPC endpoint for your external Execution client.\nNOTE: If you are running it on the same machine as this node, addresses like `localhost` and `127.0.0.1` will not work due to Docker limitations. Enter your machine's LAN IP address instead, for example 'http://192.168.1.100:8545'.",
 				AffectsContainers:  []ContainerID{},

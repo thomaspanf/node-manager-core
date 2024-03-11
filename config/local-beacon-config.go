@@ -6,11 +6,6 @@ import (
 	"github.com/rocket-pool/node-manager-core/config/ids"
 )
 
-const (
-	// Param IDs
-	BnCheckpointSyncUrlID string = "checkpointSyncUrl"
-)
-
 // Common parameters shared by all of the Beacon Clients
 type LocalBeaconConfig struct {
 	// The selected BN
@@ -87,7 +82,7 @@ func NewLocalBeaconConfig() *LocalBeaconConfig {
 
 		CheckpointSyncProvider: Parameter[string]{
 			ParameterCommon: &ParameterCommon{
-				ID:   BnCheckpointSyncUrlID,
+				ID:   ids.LocalBnCheckpointSyncUrlID,
 				Name: "Checkpoint Sync URL",
 				Description: "If you would like to instantly sync using an existing Beacon node, enter its URL.\n" +
 					"Example: https://<project ID>:<secret>@eth2-beacon-prater.infura.io\n" +
@@ -173,11 +168,11 @@ func (cfg *LocalBeaconConfig) GetParameters() []IParameter {
 // Get the sections underneath this one
 func (cfg *LocalBeaconConfig) GetSubconfigs() map[string]IConfigSection {
 	return map[string]IConfigSection{
-		ids.LocalBeacon_LighthouseID: cfg.Lighthouse,
-		ids.LocalBeacon_LodestarID:   cfg.Lodestar,
-		ids.LocalBeacon_NimbusID:     cfg.Nimbus,
-		ids.LocalBeacon_PrysmID:      cfg.Prysm,
-		ids.LocalBeacon_TekuID:       cfg.Teku,
+		ids.LocalBnLighthouseID: cfg.Lighthouse,
+		ids.LocalBnLodestarID:   cfg.Lodestar,
+		ids.LocalBnNimbusID:     cfg.Nimbus,
+		ids.LocalBnPrysmID:      cfg.Prysm,
+		ids.LocalBnTekuID:       cfg.Teku,
 	}
 }
 

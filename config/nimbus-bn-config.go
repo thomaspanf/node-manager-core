@@ -8,9 +8,6 @@ import (
 )
 
 const (
-	// Param IDs
-	NimbusPruningModeID string = "pruningMode"
-
 	// Tags
 	nimbusBnTagTest string = "statusim/nimbus-eth2:multiarch-v24.2.0"
 	nimbusBnTagProd string = "statusim/nimbus-eth2:multiarch-v24.2.0"
@@ -58,7 +55,7 @@ func NewNimbusBnConfig() *NimbusBnConfig {
 
 		PruningMode: Parameter[Nimbus_PruningMode]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 NimbusPruningModeID,
+				ID:                 ids.NimbusPruningModeID,
 				Name:               "Pruning Mode",
 				Description:        "Choose how Nimbus will prune its database. Highlight each option to learn more about it.",
 				AffectsContainers:  []ContainerID{ContainerID_BeaconNode},
