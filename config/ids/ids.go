@@ -29,9 +29,6 @@ const (
 	// Exporter
 	ExporterEnableRootFsID string = "enableRootFs"
 
-	// External Beacon
-	ExternalBnPrysmRpcUrlID string = "prysmRpcUrl"
-
 	// External Execution
 	ExternalEcWebsocketUrlID string = "wsUrl"
 
@@ -86,6 +83,7 @@ const (
 	// Prysm
 	PrysmRpcPortID     string = "rpcPort"
 	PrysmOpenRpcPortID string = "openRpcPort"
+	PrysmRpcUrlID      string = "prysmRpcUrl"
 
 	// Teku
 	TekuJvmHeapSizeID string = "jvmHeapSize"

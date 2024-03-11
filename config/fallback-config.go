@@ -64,7 +64,7 @@ func NewFallbackConfig() *FallbackConfig {
 
 		PrysmRpcUrl: Parameter[string]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 ids.ExternalBnPrysmRpcUrlID,
+				ID:                 ids.PrysmRpcUrlID,
 				Name:               "RPC URL (Prysm Only)",
 				Description:        "**Only used if you have a Prysm Validator Client.**\n\nThe URL of Prysm's gRPC API endpoint for your fallback Beacon Node. Prysm's Validator Client will need this in order to connect to it.\nNOTE: If you are running it on the same machine as your node, addresses like `localhost` and `127.0.0.1` will not work due to Docker limitations. Enter your machine's LAN IP address instead.",
 				AffectsContainers:  []ContainerID{ContainerID_ValidatorClient},
