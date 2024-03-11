@@ -48,7 +48,7 @@ func NewBesuConfig() *BesuConfig {
 
 		MaxPeers: Parameter[uint16]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 ids.BesuMaxPeersID,
+				ID:                 ids.MaxPeersID,
 				Name:               "Max Peers",
 				Description:        "The maximum number of peers Besu should connect to. This can be lowered to improve performance on low-power systems or constrained networks. We recommend keeping it at 12 or higher.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},

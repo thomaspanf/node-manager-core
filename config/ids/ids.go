@@ -19,7 +19,6 @@ const (
 
 	// Besu
 	BesuJvmHeapSizeID   string = "jvmHeapSize"
-	BesuMaxPeersID      string = "maxPeers"
 	BesuMaxBackLayersID string = "maxBackLayers"
 
 	// Bitfly
