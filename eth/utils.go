@@ -32,7 +32,7 @@ func CreateTxSubmissionFromInfo(txInfo *TransactionInfo, err error) (*Transactio
 }
 
 // Simple convenience method to add a contract call to a multicaller
-func AddCallToMulicaller(mc *batch.MultiCaller, contract *Contract, output any, method string, args ...any) {
+func AddCallToMulticaller(mc *batch.MultiCaller, contract *Contract, output any, method string, args ...any) {
 	mc.AddCall(contract.Address, contract.ABI, output, method, args...)
 }
 
