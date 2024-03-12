@@ -132,6 +132,10 @@ type ProposerDuty struct {
 	ValidatorIndex string `json:"validator_index"`
 }
 
+type CommitteesResponse struct {
+	Data []Committee `json:"data"`
+}
+
 type Attestation struct {
 	AggregationBits string `json:"aggregation_bits"`
 	Data            struct {

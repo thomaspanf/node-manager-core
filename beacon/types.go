@@ -97,6 +97,33 @@ type BeaconBlock struct {
 	FeeRecipient         common.Address
 	ExecutionBlockNumber uint64
 }
+
+// Committees is an interface as an optimization- since committees responses
+// are quite large, there's a decent cpu/memory improvement to removing the
+// translation to an intermediate storage class.
+//
+// Instead, the interface provides the access pattern that utilities want,
+// and the underlying format is just the format of the Beacon Node response.
+type Committees interface {
+	// Index returns the index of the committee at the provided offset
+	Index(int) uint64
+
+	// Slot returns the slot of the committee at the provided offset
+	Slot(int) uint64
+
+	// Validators returns the list of validators of the committee at
+	// the provided offset
+	Validators(int) []string
+
+	// Count returns the number of committees in the response
+	Count() int
+
+	// Release returns the reused validators slice buffer to the pool for
+	// further reuse, and must be called when the user is done with this
+	// committees instance
+	Release()
+}
+
 type AttestationInfo struct {
 	AggregationBits bitfield.Bitlist
 	SlotIndex       uint64

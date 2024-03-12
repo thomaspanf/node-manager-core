@@ -24,5 +24,6 @@ type IBeaconClient interface {
 	ExitValidator(ctx context.Context, validatorIndex string, epoch uint64, signature ValidatorSignature) error
 	Close(ctx context.Context) error
 	GetEth1DataForEth2Block(ctx context.Context, blockId string) (Eth1Data, bool, error)
+	GetCommitteesForEpoch(epoch *uint64) (Committees, error)
 	ChangeWithdrawalCredentials(ctx context.Context, validatorIndex string, fromBlsPubkey ValidatorPubkey, toExecutionAddress common.Address, signature ValidatorSignature) error
 }
