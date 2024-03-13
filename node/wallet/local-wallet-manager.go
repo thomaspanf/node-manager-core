@@ -8,7 +8,7 @@ import (
 	"math/big"
 
 	"github.com/goccy/go-json"
-	"github.com/rocket-pool/node-manager-core/node/validator/utils"
+	"github.com/rocket-pool/node-manager-core/node/validator"
 	"github.com/rocket-pool/node-manager-core/wallet"
 
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
@@ -256,7 +256,7 @@ func (m *LocalWalletManager) GenerateValidatorKey(path string) ([]byte, error) {
 	}
 
 	// Initialize BLS support
-	if err := utils.InitializeBls(); err != nil {
+	if err := validator.InitializeBls(); err != nil {
 		return nil, fmt.Errorf("error initializing BLS library: %w", err)
 	}
 
