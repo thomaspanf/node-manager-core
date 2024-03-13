@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -28,6 +29,7 @@ const (
 	RequestSyncStatusPath                  = "/eth/v1/node/syncing"
 	RequestEth2ConfigPath                  = "/eth/v1/config/spec"
 	RequestEth2DepositContractMethod       = "/eth/v1/config/deposit_contract"
+	RequestCommitteePath                   = "/eth/v1/beacon/states/%s/committees"
 	RequestGenesisPath                     = "/eth/v1/beacon/genesis"
 	RequestFinalityCheckpointsPath         = "/eth/v1/beacon/states/%s/finality_checkpoints"
 	RequestForkPath                        = "/eth/v1/beacon/states/%s/fork"
@@ -519,6 +521,16 @@ func (c *StandardHttpClient) GetBeaconBlock(ctx context.Context, blockId string)
 	return beaconBlock, true, nil
 }
 
+// Get the attestation committees for the given epoch, or the current epoch if nil
+func (c *StandardHttpClient) GetCommitteesForEpoch(ctx context.Context, epoch *uint64) (beacon.Committees, error) {
+	response, err := c.getCommittees(ctx, "head", epoch)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
 // Perform a withdrawal credentials change on a validator
 func (c *StandardHttpClient) ChangeWithdrawalCredentials(ctx context.Context, validatorIndex string, fromBlsPubkey beacon.ValidatorPubkey, toExecutionAddress common.Address, signature beacon.ValidatorSignature) error {
 	return c.postWithdrawalCredentialsChange(ctx, BLSToExecutionChangeRequest{
@@ -762,6 +774,76 @@ func (c *StandardHttpClient) getBeaconBlock(ctx context.Context, blockId string)
 		return BeaconBlockResponse{}, false, fmt.Errorf("error decoding beacon block data: %w", err)
 	}
 	return beaconBlock, true, nil
+}
+
+type committeesDecoder struct {
+	decoder       *json.Decoder
+	currentReader *io.ReadCloser
+}
+
+// Read will be called by the json decoder to request more bytes of data from
+// the beacon node's committees response. Since the decoder is reused, we
+// need to avoid sending it io.EOF, or it will enter an unusable state and can
+// not be reused later.
+//
+// On subsequent calls to Decode, the decoder resets its internal buffer, which
+// means any data it reads between the last json token and EOF is correctly
+// discarded.
+func (c *committeesDecoder) Read(p []byte) (int, error) {
+	n, err := (*c.currentReader).Read(p)
+	if err == io.EOF {
+		return n, nil
+	}
+
+	return n, err
+}
+
+var committeesDecoderPool sync.Pool = sync.Pool{
+	New: func() any {
+		var out committeesDecoder
+
+		out.decoder = json.NewDecoder(&out)
+		return &out
+	},
+}
+
+// Get the committees for the epoch
+func (c *StandardHttpClient) getCommittees(ctx context.Context, stateId string, epoch *uint64) (CommitteesResponse, error) {
+	var committees CommitteesResponse
+
+	query := ""
+	if epoch != nil {
+		query = fmt.Sprintf("?epoch=%d", *epoch)
+	}
+
+	// Committees responses are large, so let the json decoder read it in a buffered fashion
+	reader, status, err := c.getRequestReader(ctx, fmt.Sprintf(RequestCommitteePath, stateId)+query)
+	if err != nil {
+		return CommitteesResponse{}, fmt.Errorf("error getting committees: %w", err)
+	}
+	defer func() {
+		_ = reader.Close()
+	}()
+
+	if status != http.StatusOK {
+		body, _ := io.ReadAll(reader)
+		return CommitteesResponse{}, fmt.Errorf("error getting committees: HTTP status %d; response body: '%s'", status, string(body))
+	}
+
+	d := committeesDecoderPool.Get().(*committeesDecoder)
+	defer func() {
+		d.currentReader = nil
+		committeesDecoderPool.Put(d)
+	}()
+
+	d.currentReader = &reader
+
+	// Begin decoding
+	if err := d.decoder.Decode(&committees); err != nil {
+		return CommitteesResponse{}, fmt.Errorf("error decoding committees: %w", err)
+	}
+
+	return committees, nil
 }
 
 // Send withdrawal credentials change request

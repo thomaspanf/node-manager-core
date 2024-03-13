@@ -235,6 +235,17 @@ func (m *BeaconClientManager) GetEth1DataForEth2Block(ctx context.Context, block
 	return result1.(beacon.Eth1Data), result2.(bool), nil
 }
 
+// Get the attestation committees for an epoch
+func (m *BeaconClientManager) GetCommitteesForEpoch(ctx context.Context, epoch *uint64) (beacon.Committees, error) {
+	result, err := m.runFunction1(func(client beacon.IBeaconClient) (interface{}, error) {
+		return client.GetCommitteesForEpoch(ctx, epoch)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(beacon.Committees), nil
+}
+
 // Change the withdrawal credentials for a validator
 func (m *BeaconClientManager) ChangeWithdrawalCredentials(ctx context.Context, validatorIndex string, fromBlsPubkey beacon.ValidatorPubkey, toExecutionAddress common.Address, signature beacon.ValidatorSignature) error {
 	err := m.runFunction0(func(client beacon.IBeaconClient) error {
