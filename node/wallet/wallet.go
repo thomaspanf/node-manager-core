@@ -18,12 +18,11 @@ import (
 
 // Config
 const (
-	EntropyBits                          = 256
-	FileMode                             = 0600
-	DefaultNodeKeyPath                   = "m/44'/60'/0'/0/%d"
-	LedgerLiveNodeKeyPath                = "m/44'/60'/%d/0/0"
-	MyEtherWalletNodeKeyPath             = "m/44'/60'/0'/%d"
-	walletFileMode           fs.FileMode = 0600
+	EntropyBits              = 256
+	FileMode                 = 0600
+	DefaultNodeKeyPath       = "m/44'/60'/0'/0/%d"
+	LedgerLiveNodeKeyPath    = "m/44'/60'/%d/0/0"
+	MyEtherWalletNodeKeyPath = "m/44'/60'/0'/%d"
 )
 
 // Wallet
@@ -407,7 +406,7 @@ func (w *Wallet) saveWalletData(data *wallet.WalletData) error {
 	}
 
 	// Write the file
-	err = os.WriteFile(w.walletDataPath, bytes, walletFileMode)
+	err = os.WriteFile(w.walletDataPath, bytes, FileMode)
 	if err != nil {
 		return fmt.Errorf("error writing wallet data to [%s]: %w", w.walletDataPath, err)
 	}
