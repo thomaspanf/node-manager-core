@@ -502,8 +502,10 @@ func (c *StandardHttpClient) GetBeaconBlock(ctx context.Context, blockId string)
 	}
 
 	beaconBlock := beacon.BeaconBlock{
-		Slot:          uint64(block.Data.Message.Slot),
-		ProposerIndex: block.Data.Message.ProposerIndex,
+		Header: beacon.BeaconBlockHeader{
+			Slot:          uint64(block.Data.Message.Slot),
+			ProposerIndex: block.Data.Message.ProposerIndex,
+		},
 	}
 
 	// Execution payload only exists after the merge, so check for its existence

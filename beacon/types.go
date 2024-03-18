@@ -90,8 +90,7 @@ type Eth1Data struct {
 	BlockHash    common.Hash
 }
 type BeaconBlock struct {
-	Slot                 uint64
-	ProposerIndex        string
+	Header               BeaconBlockHeader
 	HasExecutionPayload  bool
 	Attestations         []AttestationInfo
 	FeeRecipient         common.Address
