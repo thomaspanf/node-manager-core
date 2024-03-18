@@ -7,8 +7,8 @@ import (
 // Constants
 const (
 	// Tags
-	besuTagTest string = "hyperledger/besu:24.1.1"
-	besuTagProd string = "hyperledger/besu:24.1.1"
+	besuTagTest string = "hyperledger/besu:24.3.0"
+	besuTagProd string = "hyperledger/besu:24.3.0"
 )
 
 // Configuration for Besu
@@ -21,6 +21,9 @@ type BesuConfig struct {
 
 	// Historical state block regeneration limit
 	MaxBackLayers Parameter[uint64]
+
+	// The archive mode flag
+	ArchiveMode Parameter[bool]
 
 	// The Docker Hub tag for Besu
 	ContainerTag Parameter[string]
@@ -74,6 +77,20 @@ func NewBesuConfig() *BesuConfig {
 			},
 		},
 
+		ArchiveMode: Parameter[bool]{
+			ParameterCommon: &ParameterCommon{
+				ID:                 "archiveMode",
+				Name:               "Enable Archive Mode",
+				Description:        "When enabled, Besu will run in \"archive\" mode which means it can recreate the state of the chain for a previous block. This is required for accessing the state of blocks that are more than about half-an-hour old, which may be a part of things like reward systems.",
+				AffectsContainers:  []ContainerID{ContainerID_BeaconNode},
+				CanBeBlank:         false,
+				OverwriteOnUpgrade: false,
+			},
+			Default: map[Network]bool{
+				Network_All: false,
+			},
+		},
+
 		ContainerTag: Parameter[string]{
 			ParameterCommon: &ParameterCommon{
 				ID:                 ids.ContainerTagID,
@@ -116,6 +133,7 @@ func (cfg *BesuConfig) GetParameters() []IParameter {
 		&cfg.JvmHeapSize,
 		&cfg.MaxPeers,
 		&cfg.MaxBackLayers,
+		&cfg.ArchiveMode,
 		&cfg.ContainerTag,
 		&cfg.AdditionalFlags,
 	}
