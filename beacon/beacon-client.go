@@ -13,6 +13,7 @@ type IBeaconClient interface {
 	GetEth2DepositContract(ctx context.Context) (Eth2DepositContract, error)
 	GetAttestations(ctx context.Context, blockId string) ([]AttestationInfo, bool, error)
 	GetBeaconBlock(ctx context.Context, blockId string) (BeaconBlock, bool, error)
+	GetBeaconBlockHeader(ctx context.Context, blockId string) (BeaconBlockHeader, bool, error)
 	GetBeaconHead(ctx context.Context) (BeaconHead, error)
 	GetValidatorStatusByIndex(ctx context.Context, index string, opts *ValidatorStatusOptions) (ValidatorStatus, error)
 	GetValidatorStatus(ctx context.Context, pubkey ValidatorPubkey, opts *ValidatorStatusOptions) (ValidatorStatus, error)

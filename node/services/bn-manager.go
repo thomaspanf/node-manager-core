@@ -120,6 +120,17 @@ func (m *BeaconClientManager) GetBeaconBlock(ctx context.Context, blockId string
 	return result1.(beacon.BeaconBlock), result2.(bool), nil
 }
 
+// Get the header of a Beacon chain block
+func (m *BeaconClientManager) GetBeaconBlockHeader(ctx context.Context, blockId string) (beacon.BeaconBlockHeader, bool, error) {
+	result1, result2, err := m.runFunction2(func(client beacon.IBeaconClient) (interface{}, interface{}, error) {
+		return client.GetBeaconBlockHeader(ctx, blockId)
+	})
+	if err != nil {
+		return beacon.BeaconBlockHeader{}, false, err
+	}
+	return result1.(beacon.BeaconBlockHeader), result2.(bool), nil
+}
+
 // Get the Beacon chain's head information
 func (m *BeaconClientManager) GetBeaconHead(ctx context.Context) (beacon.BeaconHead, error) {
 	result, err := m.runFunction1(func(client beacon.IBeaconClient) (interface{}, error) {

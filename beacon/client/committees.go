@@ -31,7 +31,7 @@ func (c *Committee) UnmarshalJSON(body []byte) error {
 
 	// Partially parse the json
 	if err := json.Unmarshal(body, &committee); err != nil {
-		return fmt.Errorf("error unmarshalling committee json: %w\n", err)
+		return fmt.Errorf("error unmarshalling committee json: %w", err)
 	}
 
 	// Parse each field

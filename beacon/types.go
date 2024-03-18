@@ -97,6 +97,10 @@ type BeaconBlock struct {
 	FeeRecipient         common.Address
 	ExecutionBlockNumber uint64
 }
+type BeaconBlockHeader struct {
+	Slot          uint64
+	ProposerIndex string
+}
 
 // Committees is an interface as an optimization- since committees responses
 // are quite large, there's a decent cpu/memory improvement to removing the
