@@ -56,7 +56,7 @@ func NewResources(network Network) *NetworkResources {
 		MulticallAddress:      common.HexToAddress("0x0540b786f03c9491f3a2ab4b0e3ae4ecd4f63ce7"),
 		BalanceBatcherAddress: common.HexToAddress("0xfAa2e7C84eD801dd9D27Ac1ed957274530796140"),
 		TxWatchUrl:            "https://holesky.etherscan.io/tx",
-		FlashbotsProtectUrl:   "",
+		FlashbotsProtectUrl:   "https://rpc-holesky.flashbots.net",
 	}
 
 	switch network {
