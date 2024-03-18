@@ -47,6 +47,12 @@ func NewExternalExecutionConfig() *ExternalExecutionConfig {
 						Description: "Select if your external client is Besu.",
 					},
 					Value: ExecutionClient_Besu,
+				}, {
+					ParameterOptionCommon: &ParameterOptionCommon{
+						Name:        "Reth",
+						Description: "Select if your external client is Reth.",
+					},
+					Value: ExecutionClient_Reth,
 				}},
 			Default: map[Network]ExecutionClient{
 				Network_All: ExecutionClient_Geth},

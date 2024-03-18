@@ -60,6 +60,7 @@ const (
 	LocalEcBesuID          string = "besu"
 	LocalEcGethID          string = "geth"
 	LocalEcNethermindID    string = "nethermind"
+	LocalEcRethID          string = "reth"
 
 	// Metrics
 	MetricsEnableID       string = "enableMetrics"

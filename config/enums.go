@@ -69,6 +69,9 @@ const (
 
 	// Besu
 	ExecutionClient_Besu ExecutionClient = "besu"
+
+	// Reth
+	ExecutionClient_Reth ExecutionClient = "reth"
 )
 
 // A Beacon Node (Beacon Node)

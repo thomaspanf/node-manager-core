@@ -30,6 +30,7 @@ type LocalExecutionConfig struct {
 	Geth       *GethConfig
 	Nethermind *NethermindConfig
 	Besu       *BesuConfig
+	Reth       *RethConfig
 }
 
 // Create a new LocalExecutionConfig struct
@@ -63,9 +64,16 @@ func NewLocalExecutionConfig() *LocalExecutionConfig {
 						Description: "Hyperledger Besu is a robust full Ethereum protocol client. It uses a novel system called \"Bonsai Trees\" to store its chain data efficiently, which allows it to access block states from the past and does not require pruning. Besu is fully open source and written in Java.",
 					},
 					Value: ExecutionClient_Besu,
+				}, {
+					ParameterOptionCommon: &ParameterOptionCommon{
+						Name:        "Reth (Beta)",
+						Description: "Reth is a new Ethereum full node implementation that is focused on being user-friendly, highly modular, as well as being fast and efficient. Reth is fully open source and written in Rust.\n\n[orange]NOTE: Reth is currently in beta status. Please consider this when choosing it.",
+					},
+					Value: ExecutionClient_Reth,
 				}},
 			Default: map[Network]ExecutionClient{
-				Network_All: ExecutionClient_Geth},
+				Network_All: ExecutionClient_Geth,
+			},
 		},
 
 		HttpPort: Parameter[uint16]{
@@ -144,6 +152,7 @@ func NewLocalExecutionConfig() *LocalExecutionConfig {
 	cfg.Geth = NewGethConfig()
 	cfg.Nethermind = NewNethermindConfig()
 	cfg.Besu = NewBesuConfig()
+	cfg.Reth = NewRethConfig()
 
 	return cfg
 }
@@ -171,6 +180,7 @@ func (cfg *LocalExecutionConfig) GetSubconfigs() map[string]IConfigSection {
 		ids.LocalEcBesuID:       cfg.Besu,
 		ids.LocalEcGethID:       cfg.Geth,
 		ids.LocalEcNethermindID: cfg.Nethermind,
+		ids.LocalEcRethID:       cfg.Reth,
 	}
 }
 
@@ -198,6 +208,8 @@ func (cfg *LocalExecutionConfig) GetMaxPeers() uint16 {
 		return cfg.Nethermind.MaxPeers.Value
 	case ExecutionClient_Besu:
 		return cfg.Besu.MaxPeers.Value
+	case ExecutionClient_Reth:
+		return cfg.Reth.MaxPeers.Value
 	default:
 		panic(fmt.Sprintf("Unknown Execution Client %s", string(cfg.ExecutionClient.Value)))
 	}
@@ -212,6 +224,8 @@ func (cfg *LocalExecutionConfig) GetContainerTag() string {
 		return cfg.Nethermind.ContainerTag.Value
 	case ExecutionClient_Besu:
 		return cfg.Besu.ContainerTag.Value
+	case ExecutionClient_Reth:
+		return cfg.Reth.ContainerTag.Value
 	default:
 		panic(fmt.Sprintf("Unknown Execution Client %s", string(cfg.ExecutionClient.Value)))
 	}
@@ -226,6 +240,8 @@ func (cfg *LocalExecutionConfig) GetAdditionalFlags() string {
 		return cfg.Nethermind.AdditionalFlags.Value
 	case ExecutionClient_Besu:
 		return cfg.Besu.AdditionalFlags.Value
+	case ExecutionClient_Reth:
+		return cfg.Reth.AdditionalFlags.Value
 	default:
 		panic(fmt.Sprintf("Unknown Execution Client %s", string(cfg.ExecutionClient.Value)))
 	}
