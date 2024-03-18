@@ -16,6 +16,7 @@ const (
 	GraffitiID              string = "graffiti"
 	DoppelgangerDetectionID string = "doppelgangerDetection"
 	MetricsPortID           string = "metricsPort"
+	CacheSizeID             string = "cacheSize"
 
 	// Besu
 	BesuJvmHeapSizeID   string = "jvmHeapSize"
@@ -73,7 +74,6 @@ const (
 	MetricsBitflyID       string = "bitfly"
 
 	// Nethermind
-	NethermindCacheSizeID              string = "cacheSize"
 	NethermindPruneMemSizeID           string = "pruneMemSize"
 	NethermindAdditionalModulesID      string = "additionalModules"
 	NethermindAdditionalUrlsID         string = "additionalUrls"

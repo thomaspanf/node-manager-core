@@ -50,7 +50,7 @@ func NewNethermindConfig() *NethermindConfig {
 	return &NethermindConfig{
 		CacheSize: Parameter[uint64]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 ids.NethermindCacheSizeID,
+				ID:                 ids.CacheSizeID,
 				Name:               "Cache (Memory Hint) Size",
 				Description:        "The amount of RAM (in MB) you want to suggest for Nethermind's cache. While there is no guarantee that Nethermind will stay under this limit, lower values are preferred for machines with less RAM.\n\nThe default value for this will be calculated dynamically based on your system's available RAM, but you can adjust it manually.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
