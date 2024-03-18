@@ -85,7 +85,7 @@ func NewLocalBeaconConfig() *LocalBeaconConfig {
 				ID:   ids.LocalBnCheckpointSyncUrlID,
 				Name: "Checkpoint Sync URL",
 				Description: "If you would like to instantly sync using an existing Beacon node, enter its URL.\n" +
-					"Example: https://<project ID>:<secret>@eth2-beacon-prater.infura.io\n" +
+					"Example:  	https://checkpoint-sync.holesky.ethpandaops.io (for the Holesky Testnet).\n" +
 					"Leave this blank if you want to sync normally from the start of the chain.",
 				AffectsContainers:  []ContainerID{ContainerID_BeaconNode},
 				CanBeBlank:         true,

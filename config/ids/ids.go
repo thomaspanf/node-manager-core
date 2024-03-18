@@ -20,6 +20,7 @@ const (
 	// Besu
 	BesuJvmHeapSizeID   string = "jvmHeapSize"
 	BesuMaxBackLayersID string = "maxBackLayers"
+	BesuArchiveModeID   string = "archiveMode"
 
 	// Bitfly
 	BitflySecretID      string = "bitflySecret"
@@ -72,10 +73,12 @@ const (
 	MetricsBitflyID       string = "bitfly"
 
 	// Nethermind
-	NethermindCacheSizeID         string = "cacheSize"
-	NethermindPruneMemSizeID      string = "pruneMemSize"
-	NethermindAdditionalModulesID string = "additionalModules"
-	NethermindAdditionalUrlsID    string = "additionalUrls"
+	NethermindCacheSizeID              string = "cacheSize"
+	NethermindPruneMemSizeID           string = "pruneMemSize"
+	NethermindAdditionalModulesID      string = "additionalModules"
+	NethermindAdditionalUrlsID         string = "additionalUrls"
+	NethermindFullPruneMemoryBudgetID  string = "fullPruneMemoryBudget"
+	NethermindFullPruningThresholdMbID string = "fullPruningThresholdMb"
 
 	// Nimbus
 	NimbusPruningModeID string = "pruningMode"

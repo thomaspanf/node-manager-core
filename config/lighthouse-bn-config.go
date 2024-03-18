@@ -7,10 +7,10 @@ import (
 
 const (
 	// Tags
-	lighthouseBnTagPortableTest string = "sigp/lighthouse:v4.6.0"
-	lighthouseBnTagPortableProd string = "sigp/lighthouse:v4.6.0"
-	lighthouseBnTagModernTest   string = "sigp/lighthouse:v4.6.0-modern"
-	lighthouseBnTagModernProd   string = "sigp/lighthouse:v4.6.0-modern"
+	lighthouseBnTagPortableTest string = "sigp/lighthouse:v5.1.0"
+	lighthouseBnTagPortableProd string = "sigp/lighthouse:v5.1.0"
+	lighthouseBnTagModernTest   string = "sigp/lighthouse:v5.1.0-modern"
+	lighthouseBnTagModernProd   string = "sigp/lighthouse:v5.1.0-modern"
 )
 
 // Configuration for the Lighthouse BN
@@ -55,7 +55,7 @@ func NewLighthouseBnConfig() *LighthouseBnConfig {
 				OverwriteOnUpgrade: false,
 			},
 			Default: map[Network]uint16{
-				Network_All: 80,
+				Network_All: 100,
 			},
 		},
 

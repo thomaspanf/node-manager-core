@@ -79,7 +79,7 @@ func NewBesuConfig() *BesuConfig {
 
 		ArchiveMode: Parameter[bool]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 "archiveMode",
+				ID:                 ids.BesuArchiveModeID,
 				Name:               "Enable Archive Mode",
 				Description:        "When enabled, Besu will run in \"archive\" mode which means it can recreate the state of the chain for a previous block. This is required for accessing the state of blocks that are more than about half-an-hour old, which may be a part of things like reward systems.",
 				AffectsContainers:  []ContainerID{ContainerID_BeaconNode},

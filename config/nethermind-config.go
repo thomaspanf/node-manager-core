@@ -11,8 +11,8 @@ import (
 // Constants
 const (
 	// Tags
-	nethermindTagProd string = "nethermind/nethermind:1.25.3"
-	nethermindTagTest string = "nethermind/nethermind:1.25.3"
+	nethermindTagProd string = "nethermind/nethermind:1.25.4"
+	nethermindTagTest string = "nethermind/nethermind:1.25.4"
 )
 
 // Configuration for Nethermind
@@ -23,8 +23,14 @@ type NethermindConfig struct {
 	// Max number of P2P peers to connect to
 	MaxPeers Parameter[uint16]
 
-	// Nethermind's memory for pruning
+	// Nethermind's memory for in-memory pruning
 	PruneMemSize Parameter[uint64]
+
+	// Nethermind's memory budget for full pruning
+	FullPruneMemoryBudget Parameter[uint64]
+
+	// Nethermind's remaining disk space to trigger a pruning
+	FullPruningThresholdMb Parameter[uint64]
 
 	// Additional modules to enable on the primary JSON RPC endpoint
 	AdditionalModules Parameter[string]
@@ -81,6 +87,35 @@ func NewNethermindConfig() *NethermindConfig {
 			},
 			Default: map[Network]uint64{
 				Network_All: calculateNethermindPruneMemSize(),
+			},
+		},
+
+		FullPruneMemoryBudget: Parameter[uint64]{
+			ParameterCommon: &ParameterCommon{
+				ID:                 ids.NethermindFullPruneMemoryBudgetID,
+				Name:               "Full Prune Memory Budget Size",
+				Description:        "The amount of RAM (in MB) you want to dedicate to Nethermind for its full pruning system. Higher values mean less writes to your SSD and faster pruning times.\n\nThe default value for this will be calculated dynamically based on your system's available RAM, but you can adjust it manually.",
+				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
+				CanBeBlank:         false,
+				OverwriteOnUpgrade: false,
+			},
+			Default: map[Network]uint64{
+				Network_All: calculateNethermindFullPruneMemBudget(),
+			},
+		},
+
+		FullPruningThresholdMb: Parameter[uint64]{
+			ParameterCommon: &ParameterCommon{
+				ID:                 ids.NethermindFullPruningThresholdMbID,
+				Name:               "Prune Threshold (MB)",
+				Description:        "When the volume free space (in MB) hits this level, Nethermind will automatically start full pruning to reclaim disk space.",
+				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
+				CanBeBlank:         false,
+				OverwriteOnUpgrade: false,
+			},
+			Default: map[Network]uint64{
+				Network_Mainnet: uint64(307200),
+				Network_Holesky: uint64(51200),
 			},
 		},
 
@@ -154,6 +189,8 @@ func (cfg *NethermindConfig) GetParameters() []IParameter {
 		&cfg.CacheSize,
 		&cfg.MaxPeers,
 		&cfg.PruneMemSize,
+		&cfg.FullPruneMemoryBudget,
+		&cfg.FullPruningThresholdMb,
 		&cfg.AdditionalModules,
 		&cfg.AdditionalUrls,
 		&cfg.ContainerTag,
@@ -205,6 +242,25 @@ func calculateNethermindPruneMemSize() uint64 {
 		return 1024
 	} else {
 		return 1024
+	}
+}
+
+// Calculate the recommended size for Nethermind's full pruning based on the amount of system RAM
+func calculateNethermindFullPruneMemBudget() uint64 {
+	totalMemoryGB := memory.TotalMemory() / 1024 / 1024 / 1024
+
+	if totalMemoryGB == 0 {
+		return 0
+	} else if totalMemoryGB < 9 {
+		return 1024
+	} else if totalMemoryGB < 17 {
+		return 1024
+	} else if totalMemoryGB < 25 {
+		return 1024
+	} else if totalMemoryGB < 33 {
+		return 2048
+	} else {
+		return 4096
 	}
 }
 

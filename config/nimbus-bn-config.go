@@ -9,8 +9,8 @@ import (
 
 const (
 	// Tags
-	nimbusBnTagTest string = "statusim/nimbus-eth2:multiarch-v24.2.0"
-	nimbusBnTagProd string = "statusim/nimbus-eth2:multiarch-v24.2.0"
+	nimbusBnTagTest string = "statusim/nimbus-eth2:multiarch-v24.2.2"
+	nimbusBnTagProd string = "statusim/nimbus-eth2:multiarch-v24.2.2"
 )
 
 // Nimbus's pruning mode
