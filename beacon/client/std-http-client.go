@@ -233,17 +233,29 @@ func (c *StandardHttpClient) GetValidatorStatuses(ctx context.Context, pubkeys [
 	// The null validator pubkey
 	nullPubkey := beacon.ValidatorPubkey{}
 
-	// Filter out null pubkeys
+	// Filter out null, invalid and duplicate pubkeys
 	realPubkeys := []beacon.ValidatorPubkey{}
 	for _, pubkey := range pubkeys {
-		if !bytes.Equal(pubkey[:], nullPubkey[:]) {
-			// Teku doesn't like invalid pubkeys, so filter them out to make it consistent with other clients
-			_, err := bls.PublicKeyFromBytes(pubkey[:])
-
-			if err == nil {
-				realPubkeys = append(realPubkeys, pubkey)
+		if bytes.Equal(pubkey[:], nullPubkey[:]) {
+			continue
+		}
+		isDuplicate := false
+		for _, pk := range realPubkeys {
+			if bytes.Equal(pubkey[:], pk[:]) {
+				isDuplicate = true
+				break
 			}
 		}
+		if isDuplicate {
+			continue
+		}
+
+		// Teku doesn't like invalid pubkeys, so filter them out to make it consistent with other clients
+		_, err := bls.PublicKeyFromBytes(pubkey[:])
+		if err != nil {
+			return nil, fmt.Errorf("error creating pubkey from %s: %w", pubkey.HexWithPrefix(), err)
+		}
+		realPubkeys = append(realPubkeys, pubkey)
 	}
 	// Convert pubkeys into hex strings
 	pubkeysHex := make([]string, len(realPubkeys))
@@ -383,7 +395,6 @@ func (c *StandardHttpClient) GetValidatorIndex(ctx context.Context, pubkey beaco
 
 // Get domain data for a domain type at a given epoch
 func (c *StandardHttpClient) GetDomainData(ctx context.Context, domainType []byte, epoch uint64, useGenesisFork bool) ([]byte, error) {
-
 	// Data
 	var wg errgroup.Group
 	var genesis GenesisResponse
@@ -422,7 +433,6 @@ func (c *StandardHttpClient) GetDomainData(ctx context.Context, domainType []byt
 	var dt [4]byte
 	copy(dt[:], domainType[:])
 	return eth2types.ComputeDomain(dt, forkVersion, genesis.Data.GenesisValidatorsRoot)
-
 }
 
 // Perform a voluntary exit on a validator
