@@ -320,10 +320,7 @@ func (m *ExecutionClientManager) SyncProgress(ctx context.Context) (*ethereum.Sy
 	return result.(*ethereum.SyncProgress), err
 }
 
-/// ==================
-/// Internal functions
-/// ==================
-
+// Get the status of the primary and fallback clients
 func (m *ExecutionClientManager) CheckStatus(ctx context.Context) *apitypes.ClientManagerStatus {
 	status := &apitypes.ClientManagerStatus{
 		FallbackEnabled: m.fallbackEc != nil,
@@ -352,6 +349,10 @@ func (m *ExecutionClientManager) CheckStatus(ctx context.Context) *apitypes.Clie
 
 	return status
 }
+
+/// ==================
+/// Internal functions
+/// ==================
 
 func getNetworkNameFromId(networkId uint) string {
 	switch networkId {

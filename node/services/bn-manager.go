@@ -62,7 +62,7 @@ func (m *BeaconClientManager) IsFallbackReady() bool {
 }
 
 /// ======================
-/// BeaconClient Functions
+/// IBeaconClient Functions
 /// ======================
 
 // Get the client's sync status
@@ -268,10 +268,7 @@ func (m *BeaconClientManager) ChangeWithdrawalCredentials(ctx context.Context, v
 	return nil
 }
 
-/// ==================
-/// Internal Functions
-/// ==================
-
+// Get the status of the primary and fallback clients
 func (m *BeaconClientManager) CheckStatus(ctx context.Context) *types.ClientManagerStatus {
 	status := &types.ClientManagerStatus{
 		FallbackEnabled: m.fallbackBc != nil,
@@ -302,6 +299,10 @@ func (m *BeaconClientManager) CheckStatus(ctx context.Context) *types.ClientMana
 
 	return status
 }
+
+/// ==================
+/// Internal Functions
+/// ==================
 
 // Check the client status
 func checkBcStatus(ctx context.Context, client beacon.IBeaconClient) types.ClientStatus {
