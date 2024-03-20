@@ -340,9 +340,14 @@ func (m *BeaconClientManager) runFunction0(function bcFunction0) error {
 		if err != nil {
 			if m.isDisconnected(err) {
 				// If it's disconnected, log it and try the fallback
-				m.logger.Printlnf("WARNING: Primary Beacon client disconnected (%s), using fallback...", err.Error())
 				m.primaryReady = false
-				return m.runFunction0(function)
+				if m.fallbackBc != nil {
+					m.logger.Printlnf("WARNING: Primary Beacon client disconnected (%s), using fallback...", err.Error())
+					return m.runFunction0(function)
+				} else {
+					m.logger.Printlnf("WARNING: Primary Beacon client disconnected (%s) and no fallback is configured.", err.Error())
+					return fmt.Errorf("all Beacon clients failed")
+				}
 			}
 			// If it's a different error, just return it
 			return err
@@ -381,9 +386,14 @@ func (m *BeaconClientManager) runFunction1(function bcFunction1) (interface{}, e
 		if err != nil {
 			if m.isDisconnected(err) {
 				// If it's disconnected, log it and try the fallback
-				m.logger.Printlnf("WARNING: Primary Beacon client disconnected (%s), using fallback...", err.Error())
 				m.primaryReady = false
-				return m.runFunction1(function)
+				if m.fallbackBc != nil {
+					m.logger.Printlnf("WARNING: Primary Beacon client disconnected (%s), using fallback...", err.Error())
+					return m.runFunction1(function)
+				} else {
+					m.logger.Printlnf("WARNING: Primary Beacon client disconnected (%s) and no fallback is configured.", err.Error())
+					return nil, fmt.Errorf("all Beacon clients failed")
+				}
 			}
 			// If it's a different error, just return it
 			return nil, err
@@ -422,9 +432,14 @@ func (m *BeaconClientManager) runFunction2(function bcFunction2) (interface{}, i
 		if err != nil {
 			if m.isDisconnected(err) {
 				// If it's disconnected, log it and try the fallback
-				m.logger.Printlnf("WARNING: Primary Beacon client request failed (%s), using fallback...", err.Error())
 				m.primaryReady = false
-				return m.runFunction2(function)
+				if m.fallbackBc != nil {
+					m.logger.Printlnf("WARNING: Primary Beacon client disconnected (%s), using fallback...", err.Error())
+					return m.runFunction2(function)
+				} else {
+					m.logger.Printlnf("WARNING: Primary Beacon client disconnected (%s) and no fallback is configured.", err.Error())
+					return nil, nil, fmt.Errorf("all Beacon clients failed")
+				}
 			}
 			// If it's a different error, just return it
 			return nil, nil, err

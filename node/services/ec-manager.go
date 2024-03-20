@@ -447,9 +447,14 @@ func (m *ExecutionClientManager) runFunction(ctx context.Context, function ecFun
 		if err != nil {
 			if m.isDisconnected(err) {
 				// If it's disconnected, log it and try the fallback
-				m.logger.Printlnf("Primary Execution client request failed (%s), using fallback...", err.Error())
 				m.primaryReady = false
-				return m.runFunction(ctx, function)
+				if m.fallbackEc != nil {
+					m.logger.Printlnf("WARNING: Primary Execution client disconnected (%s), using fallback...", err.Error())
+					return m.runFunction(ctx, function)
+				} else {
+					m.logger.Printlnf("WARNING: Primary Execution client disconnected (%s) and no fallback is configured.", err.Error())
+					return nil, fmt.Errorf("all Execution clients failed")
+				}
 			}
 
 			// If it's a different error, just return it

@@ -33,7 +33,7 @@ type ApiServer struct {
 	router     *mux.Router
 }
 
-func NewApiServer(socketPath string, handlers []IHandler, route string) (*ApiServer, error) {
+func NewApiServer(socketPath string, handlers []IHandler, baseRoute string, apiVersion string) (*ApiServer, error) {
 	// Create the router
 	router := mux.NewRouter()
 
@@ -49,7 +49,7 @@ func NewApiServer(socketPath string, handlers []IHandler, route string) (*ApiSer
 	}
 
 	// Register each route
-	nmcRouter := router.Host(route).Subrouter()
+	nmcRouter := router.Host(baseRoute).PathPrefix("/api/v" + apiVersion).Subrouter()
 	for _, handler := range server.handlers {
 		handler.RegisterRoutes(nmcRouter)
 	}
