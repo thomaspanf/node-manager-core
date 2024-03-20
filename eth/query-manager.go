@@ -25,8 +25,9 @@ type QueryManager struct {
 // concurrentCallLimit should be the maximum number of batches to query in parallel for batch calls. Negative values mean no limit.
 func NewQueryManager(client IExecutionClient, multicallAddress common.Address, concurrentCallLimit int) *QueryManager {
 	return &QueryManager{
-		client:           client,
-		multicallAddress: multicallAddress,
+		client:              client,
+		multicallAddress:    multicallAddress,
+		concurrentCallLimit: concurrentCallLimit,
 	}
 }
 
