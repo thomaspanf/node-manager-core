@@ -1,7 +1,9 @@
 package eth
 
 import (
+	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	batch "github.com/rocket-pool/batch-query"
@@ -50,4 +52,31 @@ type TransactionSubmission struct {
 type IQueryable interface {
 	// Adds the struct's values to the provided multicall query before it runs
 	AddToQuery(mc *batch.MultiCaller)
+}
+
+// Quoted big ints
+type QuotedBigInt big.Int
+
+// Serialize the big.Int to JSON
+func (i QuotedBigInt) MarshalJSON() ([]byte, error) {
+	nativeInt := big.Int(i)
+	return []byte("\"" + nativeInt.String() + "\""), nil
+}
+
+// Deserialize the big.Int from JSON
+func (i *QuotedBigInt) UnmarshalJSON(data []byte) error {
+	strippedString := strings.Trim(string(data), "\"")
+	nativeInt, success := big.NewInt(0).SetString(strippedString, 0)
+	if !success {
+		return fmt.Errorf("%s is not a valid big integer", strippedString)
+	}
+
+	// Set value and return
+	*i = QuotedBigInt(*nativeInt)
+	return nil
+}
+
+// Converts the QuotedBigInt to the native type
+func (i *QuotedBigInt) ToInt() *big.Int {
+	return (*big.Int)(i)
 }
