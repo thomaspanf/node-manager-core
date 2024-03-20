@@ -47,7 +47,7 @@ const (
 // Keystore for local node wallets - note that this is NOT an EIP-2335 keystore.
 type LocalWalletData struct {
 	// Encrypted seed information
-	Crypto map[string]interface{} `json:"crypto"`
+	Crypto map[string]any `json:"crypto"`
 
 	// Name of the encryptor used to generate the keystore
 	Name string `json:"name"`

@@ -948,7 +948,7 @@ func (c *StandardHttpClient) getRequest(ctx context.Context, requestPath string)
 }
 
 // Make a POST request to the beacon node
-func (c *StandardHttpClient) postRequest(ctx context.Context, requestPath string, requestBody interface{}) ([]byte, int, error) {
+func (c *StandardHttpClient) postRequest(ctx context.Context, requestPath string, requestBody any) ([]byte, int, error) {
 	// Get request body
 	requestBodyBytes, err := json.Marshal(requestBody)
 	if err != nil {

@@ -126,7 +126,7 @@ func (t *TransactionManager) SimulateTransaction(client IExecutionClient, to com
 // ===================
 
 // Create a new TransactionInfo  binding for a contract method and simulate its execution
-func (t *TransactionManager) CreateTransactionInfo(contract *Contract, method string, opts *bind.TransactOpts, parameters ...interface{}) (*TransactionInfo, error) {
+func (t *TransactionManager) CreateTransactionInfo(contract *Contract, method string, opts *bind.TransactOpts, parameters ...any) (*TransactionInfo, error) {
 	// Create the data data
 	data, err := contract.ABI.Pack(method, parameters...)
 	if err != nil {
