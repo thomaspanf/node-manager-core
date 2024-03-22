@@ -95,6 +95,7 @@ func (s *ApiServer) Start(wg *sync.WaitGroup, socketOwnerUid uint32, socketOwner
 	}
 
 	// Start listening
+	wg.Add(1)
 	go func() {
 		err := s.server.Serve(socket)
 		if !errors.Is(err, http.ErrServerClosed) {
@@ -102,7 +103,6 @@ func (s *ApiServer) Start(wg *sync.WaitGroup, socketOwnerUid uint32, socketOwner
 		}
 		wg.Done()
 	}()
-	wg.Add(1)
 
 	return nil
 }
