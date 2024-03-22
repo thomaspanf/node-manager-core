@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -32,6 +33,8 @@ type ServiceProvider struct {
 	txMgr      *eth.TransactionManager
 	queryMgr   *eth.QueryManager
 	debugMode  bool
+	ctx        context.Context
+	cancel     context.CancelFunc
 
 	// TODO: find a better place for this than the common service provider
 	apiLogger    *log.ColorLogger
@@ -87,6 +90,9 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMo
 	}
 	queryMgr := eth.NewQueryManager(ecManager, resources.MulticallAddress, concurrentCallLimit)
 
+	// Context for handling task cancellation during shutdown
+	ctx, cancel := context.WithCancel(context.Background())
+
 	// Create the provider
 	provider := &ServiceProvider{
 		cfg:        cfg,
@@ -99,6 +105,8 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMo
 		queryMgr:   queryMgr,
 		apiLogger:  &apiLogger,
 		debugMode:  debugMode,
+		ctx:        ctx,
+		cancel:     cancel,
 	}
 	return provider, nil
 }
@@ -145,4 +153,12 @@ func (p *ServiceProvider) GetApiLogger() *log.ColorLogger {
 
 func (p *ServiceProvider) IsDebugMode() bool {
 	return p.debugMode
+}
+
+func (p *ServiceProvider) GetContext() context.Context {
+	return p.ctx
+}
+
+func (p *ServiceProvider) CancelContextOnShutdown() {
+	p.cancel()
 }
