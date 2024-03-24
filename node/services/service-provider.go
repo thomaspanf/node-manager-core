@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"path/filepath"
 	"runtime"
 	"time"
@@ -18,7 +20,8 @@ import (
 const (
 	DockerApiVersion string          = "1.40"
 	apiLogColor      color.Attribute = color.FgHiCyan
-	walletLogColor   color.Attribute = color.FgYellow
+	walletLogColor   color.Attribute = color.FgHiGreen
+	debugLogColor    color.Attribute = color.FgYellow
 )
 
 // A container for all of the various services used by the node service
@@ -39,6 +42,7 @@ type ServiceProvider struct {
 	// TODO: find a better place for this than the common service provider
 	apiLogger    *log.ColorLogger
 	walletLogger *log.ColorLogger
+	debugLogger  *slog.Logger
 }
 
 // Creates a new ServiceProvider instance
@@ -46,6 +50,7 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMo
 	// Loggers
 	apiLogger := log.NewColorLogger(apiLogColor)
 	walletLogger := log.NewColorLogger(walletLogColor)
+	debugLogger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	// Wallet
 	resources := cfg.GetNetworkResources()
@@ -95,18 +100,20 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMo
 
 	// Create the provider
 	provider := &ServiceProvider{
-		cfg:        cfg,
-		resources:  resources,
-		nodeWallet: nodeWallet,
-		ecManager:  ecManager,
-		bcManager:  bcManager,
-		docker:     dockerClient,
-		txMgr:      txMgr,
-		queryMgr:   queryMgr,
-		apiLogger:  &apiLogger,
-		debugMode:  debugMode,
-		ctx:        ctx,
-		cancel:     cancel,
+		cfg:          cfg,
+		resources:    resources,
+		nodeWallet:   nodeWallet,
+		ecManager:    ecManager,
+		bcManager:    bcManager,
+		docker:       dockerClient,
+		txMgr:        txMgr,
+		queryMgr:     queryMgr,
+		apiLogger:    &apiLogger,
+		walletLogger: &walletLogger,
+		debugLogger:  debugLogger,
+		debugMode:    debugMode,
+		ctx:          ctx,
+		cancel:       cancel,
 	}
 	return provider, nil
 }

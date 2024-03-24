@@ -9,8 +9,8 @@ import (
 
 // Constants
 const (
-	rethTagProd string = "ghcr.io/paradigmxyz/reth:v0.2.0-beta.1"
-	rethTagTest string = "ghcr.io/paradigmxyz/reth:v0.2.0-beta.1"
+	rethTagProd string = "ghcr.io/paradigmxyz/reth:v0.2.0-beta.3"
+	rethTagTest string = "ghcr.io/paradigmxyz/reth:v0.2.0-beta.3"
 )
 
 // Configuration for Reth
