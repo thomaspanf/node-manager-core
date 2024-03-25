@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"math/big"
 	"os"
 
 	"github.com/goccy/go-json"
@@ -117,7 +118,37 @@ func (w *Wallet) GetTransactor() (*bind.TransactOpts, error) {
 	if w.walletManager == nil {
 		return nil, fmt.Errorf("wallet is not loaded")
 	}
-	return w.walletManager.GetTransactor()
+
+	opts, err := w.walletManager.GetTransactor()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a copy of the transactor so mods to it don't propagate to the underlying struct
+	clone := &bind.TransactOpts{
+		From:   opts.From,
+		Signer: opts.Signer,
+
+		GasLimit: opts.GasLimit,
+		Context:  opts.Context,
+		NoSend:   opts.NoSend,
+	}
+	if opts.Nonce != nil {
+		clone.Nonce = big.NewInt(0).Set(opts.Nonce)
+	}
+	if opts.Value != nil {
+		clone.Value = big.NewInt(0).Set(opts.Value)
+	}
+	if opts.GasPrice != nil {
+		clone.GasPrice = big.NewInt(0).Set(opts.GasPrice)
+	}
+	if opts.GasFeeCap != nil {
+		clone.GasFeeCap = big.NewInt(0).Set(opts.GasFeeCap)
+	}
+	if opts.GasTipCap != nil {
+		clone.GasFeeCap = big.NewInt(0).Set(opts.GasTipCap)
+	}
+	return clone, nil
 }
 
 // Sign a message with the wallet's private key
