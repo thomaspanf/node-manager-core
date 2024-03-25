@@ -2,12 +2,9 @@ package server
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 
-	"github.com/goccy/go-json"
 	"github.com/rocket-pool/node-manager-core/utils/input"
-	"github.com/rocket-pool/node-manager-core/utils/log"
 )
 
 // Function for validating an argument (wraps the old CLI validators)
@@ -105,48 +102,4 @@ func GetOptionalStringFromVars(name string, args url.Values, result_Out *string)
 	// Set the result
 	*result_Out = arg[0]
 	return true
-}
-
-// Handles an error related to parsing the input parameters of a request
-func HandleInputError(log *log.ColorLogger, w http.ResponseWriter, err error) {
-	// Write out any errors
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		log.Printlnf("[%d BAD_REQUEST] <= %s", http.StatusBadRequest, err.Error())
-	}
-}
-
-// Handle routes called with an invalid method
-func HandleInvalidMethod(log *log.ColorLogger, w http.ResponseWriter) {
-	w.WriteHeader(http.StatusMethodNotAllowed)
-	w.Write([]byte{})
-	log.Printlnf("[%d METHOD_NOT_ALLOWED]", http.StatusMethodNotAllowed)
-}
-
-// Handles a Node daemon response
-func HandleResponse(log *log.ColorLogger, w http.ResponseWriter, response any, err error, debug bool) {
-	// Write out any errors
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		log.Printlnf("[%d INTERNAL_SERVER_ERROR] <= %s", http.StatusInternalServerError, err.Error())
-	}
-
-	// Write the serialized response
-	bytes, err := json.Marshal(response)
-	if err != nil {
-		err = fmt.Errorf("error serializing response: %w", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		log.Printlnf("[%d INTERNAL_SERVER_ERROR] <= %s", http.StatusInternalServerError, err.Error())
-	} else {
-		w.Header().Add("Content-Type", "application/json")
-		w.Write(bytes)
-		if debug {
-			log.Printlnf("[%d OK] <= %s", http.StatusOK, string(bytes))
-		} else {
-			log.Printlnf("[%d OK]", http.StatusOK)
-		}
-	}
 }

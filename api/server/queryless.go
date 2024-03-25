@@ -8,6 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/goccy/go-json"
+	"github.com/rocket-pool/node-manager-core/api/types"
 	"github.com/rocket-pool/node-manager-core/node/services"
 	"github.com/rocket-pool/node-manager-core/utils"
 
@@ -29,7 +30,7 @@ type SuccessData struct {
 type IQuerylessCallContext[DataType any] interface {
 	// Prepare the response data in whatever way the context needs to do
 	//PrepareData(data *DataType, opts *bind.TransactOpts) error
-	PrepareData(data *DataType, opts *bind.TransactOpts) error
+	PrepareData(data *DataType, opts *bind.TransactOpts) (types.ResponseStatus, error)
 }
 
 // Interface for queryless call context factories that handle GET calls.
@@ -79,8 +80,8 @@ func RegisterQuerylessGet[ContextType IQuerylessCallContext[DataType], DataType 
 		}
 
 		// Run the context's processing routine
-		response, err := runQuerylessRoute[DataType](context, serviceProvider)
-		HandleResponse(log, w, response, err, isDebug)
+		status, response, err := runQuerylessRoute[DataType](context, serviceProvider)
+		HandleResponse(log, w, status, response, err, isDebug)
 	})
 }
 
@@ -130,13 +131,13 @@ func RegisterQuerylessPost[ContextType IQuerylessCallContext[DataType], BodyType
 		}
 
 		// Run the context's processing routine
-		response, err := runQuerylessRoute[DataType](context, serviceProvider)
-		HandleResponse(log, w, response, err, isDebug)
+		status, response, err := runQuerylessRoute[DataType](context, serviceProvider)
+		HandleResponse(log, w, status, response, err, isDebug)
 	})
 }
 
 // Run a route registered with no structured chain query pattern
-func runQuerylessRoute[DataType any](ctx IQuerylessCallContext[DataType], serviceProvider *services.ServiceProvider) (*ApiResponse[DataType], error) {
+func runQuerylessRoute[DataType any](ctx IQuerylessCallContext[DataType], serviceProvider *services.ServiceProvider) (types.ResponseStatus, *ApiResponse[DataType], error) {
 	// Get the services
 	w := serviceProvider.GetWallet()
 
@@ -144,13 +145,13 @@ func runQuerylessRoute[DataType any](ctx IQuerylessCallContext[DataType], servic
 	var opts *bind.TransactOpts
 	walletStatus, err := w.GetStatus()
 	if err != nil {
-		return nil, fmt.Errorf("error getting wallet status: %w", err)
+		return types.ResponseStatus_Error, nil, fmt.Errorf("error getting wallet status: %w", err)
 	}
 	if utils.IsWalletReady(walletStatus) {
 		var err error
 		opts, err = w.GetTransactor()
 		if err != nil {
-			return nil, fmt.Errorf("error getting node account transactor: %w", err)
+			return types.ResponseStatus_Error, nil, fmt.Errorf("error getting node account transactor: %w", err)
 		}
 	}
 
@@ -161,11 +162,6 @@ func runQuerylessRoute[DataType any](ctx IQuerylessCallContext[DataType], servic
 	}
 
 	// Prep the data with the context-specific behavior
-	err = ctx.PrepareData(data, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	// Return
-	return response, nil
+	status, err := ctx.PrepareData(data, opts)
+	return status, response, err
 }

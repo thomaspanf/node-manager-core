@@ -20,7 +20,7 @@ import (
 // Structs implementing this will handle the caller-specific functionality.
 type ISingleStageCallContext[DataType any] interface {
 	// Initialize the context with any bootstrapping, requirements checks, or bindings it needs to set up
-	Initialize() error
+	Initialize() (types.ResponseStatus, error)
 
 	// Used to get any supplemental state required during initialization - anything in here will be fed into an hd.Query() multicall
 	GetState(mc *batch.MultiCaller)
@@ -76,8 +76,8 @@ func RegisterSingleStageRoute[ContextType ISingleStageCallContext[DataType], Dat
 		}
 
 		// Run the context's processing routine
-		response, err := runSingleStageRoute[DataType](context, serviceProvider)
-		HandleResponse(log, w, response, err, isDebug)
+		status, response, err := runSingleStageRoute[DataType](context, serviceProvider)
+		HandleResponse(log, w, status, response, err, isDebug)
 	})
 }
 
@@ -127,21 +127,21 @@ func RegisterSingleStagePost[ContextType ISingleStageCallContext[DataType], Body
 		}
 
 		// Run the context's processing routine
-		response, err := runSingleStageRoute[DataType](context, serviceProvider)
-		HandleResponse(log, w, response, err, isDebug)
+		status, response, err := runSingleStageRoute[DataType](context, serviceProvider)
+		HandleResponse(log, w, status, response, err, isDebug)
 	})
 }
 
 // Run a route registered with the common single-stage querying pattern
-func runSingleStageRoute[DataType any](ctx ISingleStageCallContext[DataType], serviceProvider *services.ServiceProvider) (*types.ApiResponse[DataType], error) {
+func runSingleStageRoute[DataType any](ctx ISingleStageCallContext[DataType], serviceProvider *services.ServiceProvider) (types.ResponseStatus, *types.ApiResponse[DataType], error) {
 	// Get the services
 	w := serviceProvider.GetWallet()
 	q := serviceProvider.GetQueryManager()
 
 	// Initialize the context with any bootstrapping, requirements checks, or bindings it needs to set up
-	err := ctx.Initialize()
+	status, err := ctx.Initialize()
 	if err != nil {
-		return nil, err
+		return status, nil, err
 	}
 
 	// Get the context-specific contract state
@@ -150,20 +150,20 @@ func runSingleStageRoute[DataType any](ctx ISingleStageCallContext[DataType], se
 		return nil
 	}, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error getting contract state: %w", err)
+		return types.ResponseStatus_Error, nil, fmt.Errorf("error running chain state query: %w", err)
 	}
 
 	// Get the transact opts if this node is ready for transaction
 	var opts *bind.TransactOpts
 	walletStatus, err := w.GetStatus()
 	if err != nil {
-		return nil, fmt.Errorf("error getting wallet status: %w", err)
+		return types.ResponseStatus_Error, nil, fmt.Errorf("error getting wallet status: %w", err)
 	}
 	if utils.IsWalletReady(walletStatus) {
 		var err error
 		opts, err = w.GetTransactor()
 		if err != nil {
-			return nil, fmt.Errorf("error getting node account transactor: %w", err)
+			return types.ResponseStatus_Error, nil, fmt.Errorf("error getting node account transactor: %w", err)
 		}
 	}
 
@@ -176,9 +176,9 @@ func runSingleStageRoute[DataType any](ctx ISingleStageCallContext[DataType], se
 	// Prep the data with the context-specific behavior
 	err = ctx.PrepareData(data, opts)
 	if err != nil {
-		return nil, err
+		return types.ResponseStatus_Error, nil, err
 	}
 
 	// Return
-	return response, nil
+	return types.ResponseStatus_Success, response, nil
 }
