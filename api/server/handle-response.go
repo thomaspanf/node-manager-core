@@ -12,7 +12,7 @@ import (
 const (
 	addressNotPresentMessage string = "The node requires an address for this request but one isn't present: %s"
 	walletNotReadyMessage    string = "A wallet is required for this request but the node wallet isn't ready: %s"
-	resourceExistsMessage    string = "You are attempting to create a resource that is already present on the node: %s"
+	resourceConflictMessage  string = "Encountered a resource conflict: %s"
 	resourceNotFoundMessage  string = "The requested resource could not be found: %s"
 	clientsNotSyncedMessage  string = "The Execution Client and/or Beacon Node aren't finished syncing yet. Please try again once they've finished."
 	invalidChainStateMessage string = "The Ethereum chain's state is not correct for the request: %s"
@@ -49,27 +49,28 @@ func HandleWalletNotReady(log *log.ColorLogger, w http.ResponseWriter, err error
 	log.Printlnf("[%d UNPROCESSABLE ENTITY (Wallet not ready: %s)]", http.StatusUnprocessableEntity, errorMsg)
 }
 
-// The request couldn't complete because it's trying to create a resource on the node that already exists
-func HandleResourceExists(log *log.ColorLogger, w http.ResponseWriter, err error) {
+// The request couldn't complete because it's trying to create a resource that already exists, or use a resource that conflicts with what's requested
+func HandleResourceConflict(log *log.ColorLogger, w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusConflict)
 	errorMsg := err.Error()
-	writeResponse(w, formatError(fmt.Sprintf(resourceExistsMessage, errorMsg)))
-	log.Printlnf("[%d CONFLICT (Resource exists: %s)]", http.StatusConflict, errorMsg)
+	writeResponse(w, formatError(fmt.Sprintf(resourceConflictMessage, errorMsg)))
+	log.Printlnf("[%d CONFLICT (Resource conflict: %s)]", http.StatusConflict, errorMsg)
 }
 
 // The request couldn't complete because it's trying to access a resource that didn't exist or couldn't be found
 func HandleResourceNotFound(log *log.ColorLogger, w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusNotFound)
 	errorMsg := err.Error()
-	writeResponse(w, formatError(fmt.Sprintf(resourceExistsMessage, errorMsg)))
+	writeResponse(w, formatError(fmt.Sprintf(resourceNotFoundMessage, errorMsg)))
 	log.Printlnf("[%d NOT FOUND (Resource not found: %s)]", http.StatusNotFound, errorMsg)
 }
 
 // The request couldn't complete because the clients aren't synced yet
-func HandleClientNotSynced(log *log.ColorLogger, w http.ResponseWriter) {
+func HandleClientNotSynced(log *log.ColorLogger, w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusUnprocessableEntity)
-	writeResponse(w, formatError(clientsNotSyncedMessage))
-	log.Printlnf("[%d UNPROCESSABLE ENTITY (Clients not synced)]", http.StatusUnprocessableEntity)
+	errorMsg := err.Error()
+	writeResponse(w, formatError(fmt.Sprintf(clientsNotSyncedMessage, errorMsg)))
+	log.Printlnf("[%d UNPROCESSABLE ENTITY (Clients not synced: %s)]", http.StatusUnprocessableEntity, errorMsg)
 }
 
 // The request couldn't complete because the chain state is preventing the request (it will revert if submitted)
@@ -115,12 +116,12 @@ func HandleFailedResponse(log *log.ColorLogger, w http.ResponseWriter, status ty
 		HandleAddressNotPresent(log, w, err)
 	case types.ResponseStatus_WalletNotReady:
 		HandleWalletNotReady(log, w, err)
-	case types.ResponseStatus_ResourceExists:
-		HandleResourceExists(log, w, err)
+	case types.ResponseStatus_ResourceConflict:
+		HandleResourceConflict(log, w, err)
 	case types.ResponseStatus_ResourceNotFound:
 		HandleResourceNotFound(log, w, err)
 	case types.ResponseStatus_ClientsNotSynced:
-		HandleClientNotSynced(log, w)
+		HandleClientNotSynced(log, w, err)
 	case types.ResponseStatus_InvalidChainState:
 		HandleInvalidChainState(log, w, err)
 	case types.ResponseStatus_Error:

@@ -46,8 +46,8 @@ const (
 	// The request failed because it requires a node wallet but one wasn't ready for usage
 	ResponseStatus_WalletNotReady
 
-	// The request failed because it is attempting to create a resource on the server that already exists
-	ResponseStatus_ResourceExists
+	// The request couldn't complete because it's trying to create a resource that already exists, or use a resource that conflicts with what's requested
+	ResponseStatus_ResourceConflict
 
 	// The request failed because it is attempting to access a resource on the server that can't be found
 	ResponseStatus_ResourceNotFound
