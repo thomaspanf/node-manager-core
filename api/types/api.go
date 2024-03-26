@@ -5,7 +5,8 @@ import (
 )
 
 type ApiResponse[Data any] struct {
-	Data *Data `json:"data"`
+	Data  *Data  `json:"data,omitempty"`
+	Error string `json:"error,omitempty"`
 }
 
 type SuccessData struct {
@@ -35,6 +36,21 @@ const (
 
 	// The request failed because of an internal error within the daemon
 	ResponseStatus_Error
+
+	// The request failed because there was a problem with the provided arguments in the request
+	ResponseStatus_InvalidArguments
+
+	// The request failed because it requires a node address but one was not present
+	ResponseStatus_AddressNotPresent
+
+	// The request failed because it requires a node wallet but one wasn't ready for usage
+	ResponseStatus_WalletNotReady
+
+	// The request failed because it is attempting to create a resource on the server that already exists
+	ResponseStatus_ResourceExists
+
+	// The request failed because it is attempting to access a resource on the server that can't be found
+	ResponseStatus_ResourceNotFound
 
 	// The request failed because the clients weren't synced yet, but synced clients were required for the request
 	ResponseStatus_ClientsNotSynced

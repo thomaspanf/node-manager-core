@@ -15,14 +15,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type ApiResponse[Data any] struct {
-	Data *Data `json:"data"`
-}
-
-type SuccessData struct {
-	Success bool `json:"success"`
-}
-
 // Wrapper for callbacks used by call runners that simply run without following a structured pattern of
 // querying the chain. This is the most general form of context and can be used by anything as it doesn't
 // add any scaffolding.
@@ -137,7 +129,7 @@ func RegisterQuerylessPost[ContextType IQuerylessCallContext[DataType], BodyType
 }
 
 // Run a route registered with no structured chain query pattern
-func runQuerylessRoute[DataType any](ctx IQuerylessCallContext[DataType], serviceProvider *services.ServiceProvider) (types.ResponseStatus, *ApiResponse[DataType], error) {
+func runQuerylessRoute[DataType any](ctx IQuerylessCallContext[DataType], serviceProvider *services.ServiceProvider) (types.ResponseStatus, *types.ApiResponse[DataType], error) {
 	// Get the services
 	w := serviceProvider.GetWallet()
 
@@ -157,7 +149,7 @@ func runQuerylessRoute[DataType any](ctx IQuerylessCallContext[DataType], servic
 
 	// Create the response and data
 	data := new(DataType)
-	response := &ApiResponse[DataType]{
+	response := &types.ApiResponse[DataType]{
 		Data: data,
 	}
 

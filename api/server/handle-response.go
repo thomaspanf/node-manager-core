@@ -4,13 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"runtime/debug"
 
 	"github.com/rocket-pool/node-manager-core/api/types"
 	"github.com/rocket-pool/node-manager-core/utils/log"
 )
 
 const (
+	addressNotPresentMessage string = "The node requires an address for this request but one isn't present: %s"
+	walletNotReadyMessage    string = "A wallet is required for this request but the node wallet isn't ready: %s"
+	resourceExistsMessage    string = "You are attempting to create a resource that is already present on the node: %s"
+	resourceNotFoundMessage  string = "The requested resource could not be found: %s"
 	clientsNotSyncedMessage  string = "The Execution Client and/or Beacon Node aren't finished syncing yet. Please try again once they've finished."
 	invalidChainStateMessage string = "The Ethereum chain's state is not correct for the request: %s"
 )
@@ -26,14 +29,46 @@ func HandleInvalidMethod(log *log.ColorLogger, w http.ResponseWriter) {
 func HandleInputError(log *log.ColorLogger, w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusBadRequest)
 	errorMsg := err.Error()
-	writeResponse(w, formatError(errorMsg, nil))
+	writeResponse(w, formatError(errorMsg))
 	log.Printlnf("[%d BAD_REQUEST] <= %s", http.StatusBadRequest, errorMsg)
+}
+
+// The request couldn't complete because the node requires an address but one wasn't present
+func HandleAddressNotPresent(log *log.ColorLogger, w http.ResponseWriter, err error) {
+	w.WriteHeader(http.StatusUnprocessableEntity)
+	errorMsg := err.Error()
+	writeResponse(w, formatError(fmt.Sprintf(addressNotPresentMessage, errorMsg)))
+	log.Printlnf("[%d UNPROCESSABLE ENTITY (Address not present: %s)]", http.StatusUnprocessableEntity, errorMsg)
+}
+
+// The request couldn't complete because the node requires a wallet but one isn't present or useable
+func HandleWalletNotReady(log *log.ColorLogger, w http.ResponseWriter, err error) {
+	w.WriteHeader(http.StatusUnprocessableEntity)
+	errorMsg := err.Error()
+	writeResponse(w, formatError(fmt.Sprintf(walletNotReadyMessage, errorMsg)))
+	log.Printlnf("[%d UNPROCESSABLE ENTITY (Wallet not ready: %s)]", http.StatusUnprocessableEntity, errorMsg)
+}
+
+// The request couldn't complete because it's trying to create a resource on the node that already exists
+func HandleResourceExists(log *log.ColorLogger, w http.ResponseWriter, err error) {
+	w.WriteHeader(http.StatusConflict)
+	errorMsg := err.Error()
+	writeResponse(w, formatError(fmt.Sprintf(resourceExistsMessage, errorMsg)))
+	log.Printlnf("[%d CONFLICT (Resource exists: %s)]", http.StatusConflict, errorMsg)
+}
+
+// The request couldn't complete because it's trying to access a resource that didn't exist or couldn't be found
+func HandleResourceNotFound(log *log.ColorLogger, w http.ResponseWriter, err error) {
+	w.WriteHeader(http.StatusNotFound)
+	errorMsg := err.Error()
+	writeResponse(w, formatError(fmt.Sprintf(resourceExistsMessage, errorMsg)))
+	log.Printlnf("[%d NOT FOUND (Resource not found: %s)]", http.StatusNotFound, errorMsg)
 }
 
 // The request couldn't complete because the clients aren't synced yet
 func HandleClientNotSynced(log *log.ColorLogger, w http.ResponseWriter) {
 	w.WriteHeader(http.StatusUnprocessableEntity)
-	writeResponse(w, formatError(clientsNotSyncedMessage, nil))
+	writeResponse(w, formatError(clientsNotSyncedMessage))
 	log.Printlnf("[%d UNPROCESSABLE ENTITY (Clients not synced)]", http.StatusUnprocessableEntity)
 }
 
@@ -41,17 +76,16 @@ func HandleClientNotSynced(log *log.ColorLogger, w http.ResponseWriter) {
 func HandleInvalidChainState(log *log.ColorLogger, w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusUnprocessableEntity)
 	errorMsg := err.Error()
-	writeResponse(w, formatError(fmt.Sprintf(invalidChainStateMessage, errorMsg), nil))
+	writeResponse(w, formatError(fmt.Sprintf(invalidChainStateMessage, errorMsg)))
 	log.Printlnf("[%d UNPROCESSABLE ENTITY (Invalid chain state: %s)]", http.StatusUnprocessableEntity, errorMsg)
 }
 
 // The request couldn't complete because of a server error
 func HandleServerError(log *log.ColorLogger, w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusInternalServerError)
-	stack := debug.Stack()
 	errorMsg := err.Error()
-	writeResponse(w, formatError(errorMsg, stack))
-	log.Printlnf("[%d INTERNAL SERVER ERROR (%s)]\n%s", http.StatusInternalServerError, errorMsg, stack)
+	writeResponse(w, formatError(errorMsg))
+	log.Printlnf("[%d INTERNAL SERVER ERROR (%s)]", http.StatusInternalServerError, errorMsg)
 }
 
 // The request completed successfully
@@ -75,6 +109,16 @@ func HandleSuccess(log *log.ColorLogger, w http.ResponseWriter, response any, de
 // Handles an API response for a request that could not be completed
 func HandleFailedResponse(log *log.ColorLogger, w http.ResponseWriter, status types.ResponseStatus, err error) {
 	switch status {
+	case types.ResponseStatus_InvalidArguments:
+		HandleInputError(log, w, err)
+	case types.ResponseStatus_AddressNotPresent:
+		HandleAddressNotPresent(log, w, err)
+	case types.ResponseStatus_WalletNotReady:
+		HandleWalletNotReady(log, w, err)
+	case types.ResponseStatus_ResourceExists:
+		HandleResourceExists(log, w, err)
+	case types.ResponseStatus_ResourceNotFound:
+		HandleResourceNotFound(log, w, err)
 	case types.ResponseStatus_ClientsNotSynced:
 		HandleClientNotSynced(log, w)
 	case types.ResponseStatus_InvalidChainState:
@@ -103,17 +147,9 @@ func writeResponse(w http.ResponseWriter, message []byte) {
 }
 
 // JSONifies an error for responding to requests
-func formatError(message string, stackTrace []byte) []byte {
-	type errorMessage struct {
-		Error      string `json:"error"`
-		StackTrace string `json:"stackTrace,omitempty"`
-	}
-
-	msg := errorMessage{
+func formatError(message string) []byte {
+	msg := types.ApiResponse[any]{
 		Error: message,
-	}
-	if stackTrace != nil {
-		msg.StackTrace = string(stackTrace)
 	}
 
 	bytes, _ := json.Marshal(msg)

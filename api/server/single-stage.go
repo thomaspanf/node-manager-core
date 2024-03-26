@@ -26,7 +26,7 @@ type ISingleStageCallContext[DataType any] interface {
 	GetState(mc *batch.MultiCaller)
 
 	// Prepare the response data in whatever way the context needs to do
-	PrepareData(data *DataType, opts *bind.TransactOpts) error
+	PrepareData(data *DataType, opts *bind.TransactOpts) (types.ResponseStatus, error)
 }
 
 // Interface for single-stage call context factories - these will be invoked during route handling to create the
@@ -174,11 +174,6 @@ func runSingleStageRoute[DataType any](ctx ISingleStageCallContext[DataType], se
 	}
 
 	// Prep the data with the context-specific behavior
-	err = ctx.PrepareData(data, opts)
-	if err != nil {
-		return types.ResponseStatus_Error, nil, err
-	}
-
-	// Return
-	return types.ResponseStatus_Success, response, nil
+	status, err = ctx.PrepareData(data, opts)
+	return status, response, err
 }

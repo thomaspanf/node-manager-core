@@ -164,29 +164,32 @@ func HandleResponse[DataType any](context *RequesterContext, resp *http.Response
 	// Read the body
 	defer resp.Body.Close()
 	bytes, err := io.ReadAll(resp.Body)
-
-	// Check if the request failed
-	if resp.StatusCode != http.StatusOK {
-		if err != nil {
-			return nil, fmt.Errorf("server responded to %s with code %s but reading the response body failed: %w", path, resp.Status, err)
-		}
-		msg := string(bytes)
-		return nil, fmt.Errorf("server responded to %s with code %s: [%s]", path, resp.Status, msg)
-	}
 	if err != nil {
 		return nil, fmt.Errorf("error reading the response body for %s: %w", path, err)
-	}
-
-	// Debug log
-	if context.DebugMode {
-		context.Log.Printlnf("[DEBUG] Response: %s", string(bytes))
 	}
 
 	// Deserialize the response into the provided type
 	var parsedResponse types.ApiResponse[DataType]
 	err = json.Unmarshal(bytes, &parsedResponse)
 	if err != nil {
-		return nil, fmt.Errorf("error deserializing response to %s: %w; original body: [%s]", path, err, string(bytes))
+		if context.DebugMode {
+			context.Log.Printlnf("[DEBUG] Response: Code %s, Body %s", resp.Status, string(bytes))
+		}
+		return nil, fmt.Errorf("error deserializing response to %s: %w", path, err)
+	}
+
+	// Check if the request failed
+	if resp.StatusCode != http.StatusOK {
+		if context.DebugMode {
+			return nil, fmt.Errorf("server responded to %s with code %s: [%s]", path, resp.Status, parsedResponse.Error)
+		} else {
+			return nil, fmt.Errorf(parsedResponse.Error)
+		}
+	}
+
+	// Debug log
+	if context.DebugMode {
+		context.Log.Printlnf("[DEBUG] Response: %s", string(bytes))
 	}
 
 	return &parsedResponse, nil
