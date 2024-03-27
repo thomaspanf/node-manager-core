@@ -165,6 +165,10 @@ func runSingleStageRoute[DataType any](ctx ISingleStageCallContext[DataType], se
 		if err != nil {
 			return types.ResponseStatus_Error, nil, fmt.Errorf("error getting node account transactor: %w", err)
 		}
+	} else {
+		opts = &bind.TransactOpts{
+			From: walletStatus.Address.NodeAddress,
+		}
 	}
 
 	// Create the response and data
