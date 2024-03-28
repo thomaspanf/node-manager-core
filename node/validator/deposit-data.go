@@ -4,16 +4,15 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/prysmaticlabs/prysm/v4/beacon-chain/core/signing"
-	prdeposit "github.com/prysmaticlabs/prysm/v4/contracts/deposit"
-	ethpb "github.com/prysmaticlabs/prysm/v4/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v5/beacon-chain/core/signing"
+	prdeposit "github.com/prysmaticlabs/prysm/v5/contracts/deposit"
+	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"github.com/rocket-pool/node-manager-core/beacon"
-	"github.com/rocket-pool/node-manager-core/config"
 	eth2types "github.com/wealdtech/go-eth2-types/v2"
 )
 
 // Get deposit data & root for a given validator key and withdrawal credentials
-func GetDepositData(validatorKey *eth2types.BLSPrivateKey, withdrawalCredentials common.Hash, genesisForkVersion []byte, depositAmount uint64, network config.Network) (beacon.ExtendedDepositData, error) {
+func GetDepositData(validatorKey *eth2types.BLSPrivateKey, withdrawalCredentials common.Hash, genesisForkVersion []byte, depositAmount uint64, networkName string) (beacon.ExtendedDepositData, error) {
 	// Build deposit data
 	dd := beacon.DepositDataNoSignature{
 		PublicKey:             validatorKey.PublicKey().Marshal(),
@@ -56,7 +55,7 @@ func GetDepositData(validatorKey *eth2types.BLSPrivateKey, withdrawalCredentials
 	}
 
 	// Make sure everything is correct
-	err = validateDepositInfo(genesisForkVersion, depositAmount, beacon.ValidatorPubkey(dd.PublicKey), withdrawalCredentials, beacon.ValidatorSignature(depositData.Signature))
+	err = validateDepositInfo(genesisForkVersion, depositAmount, dd.PublicKey, dd.WithdrawalCredentials, depositData.Signature)
 	if err != nil {
 		return beacon.ExtendedDepositData{}, fmt.Errorf("deposit data failed signature validation: %w", err)
 	}
@@ -70,12 +69,11 @@ func GetDepositData(validatorKey *eth2types.BLSPrivateKey, withdrawalCredentials
 		DepositMessageRoot:    messageRoot[:],
 		DepositDataRoot:       depositDataRoot[:],
 		ForkVersion:           genesisForkVersion,
-		NetworkName:           string(network),
+		NetworkName:           networkName,
 	}, nil
 }
 
-func validateDepositInfo(genesisForkVersion []byte, depositAmount uint64, pubkey beacon.ValidatorPubkey, withdrawalCredentials common.Hash, signature beacon.ValidatorSignature) error {
-
+func validateDepositInfo(genesisForkVersion []byte, depositAmount uint64, pubkey []byte, withdrawalCredentials []byte, signature []byte) error {
 	// Get the deposit domain based on the eth2 config
 	depositDomain, err := signing.ComputeDomain(eth2types.DomainDeposit, genesisForkVersion, eth2types.ZeroGenesisValidatorsRoot)
 	if err != nil {
@@ -85,12 +83,11 @@ func validateDepositInfo(genesisForkVersion []byte, depositAmount uint64, pubkey
 	// Create the deposit struct
 	depositData := new(ethpb.Deposit_Data)
 	depositData.Amount = depositAmount
-	depositData.PublicKey = pubkey[:]
-	depositData.WithdrawalCredentials = withdrawalCredentials[:]
-	depositData.Signature = signature[:]
+	depositData.PublicKey = pubkey
+	depositData.WithdrawalCredentials = withdrawalCredentials
+	depositData.Signature = signature
 
 	// Validate the signature
 	err = prdeposit.VerifyDepositSignature(depositData, depositDomain)
 	return err
-
 }

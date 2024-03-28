@@ -18,7 +18,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.7
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
 	github.com/prysmaticlabs/go-bitfield v0.0.0-20210809151128-385d8c5e3fb7
-	github.com/prysmaticlabs/prysm/v4 v4.2.1
+	github.com/prysmaticlabs/prysm/v5 v5.0.2
 	github.com/rocket-pool/batch-query v1.0.0
 	github.com/sethvargo/go-password v0.2.0
 	github.com/tyler-smith/go-bip39 v1.1.0
@@ -57,7 +57,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1 // indirect
-	github.com/herumi/bls-eth-go-binary v1.34.1 // indirect
+	github.com/herumi/bls-eth-go-binary v1.33.0 // indirect
 	github.com/holiman/uint256 v1.2.4 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
