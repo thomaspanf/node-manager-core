@@ -5,7 +5,7 @@ type IConfig interface {
 
 	GetApiLogFilePath() string
 
-	GetDaemonLogFilePath() string
+	GetTasksLogFilePath() string
 
 	GetNodeAddressFilePath() string
 

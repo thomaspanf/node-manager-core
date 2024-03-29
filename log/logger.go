@@ -15,7 +15,7 @@ type Logger struct {
 }
 
 // Creates a new logger
-func NewLogger(logFilePath string, debugMode bool) (*Logger, error) {
+func NewLogger(logFilePath string, debugMode bool, enableSourceLogging bool) (*Logger, error) {
 	// Make the file
 	err := os.MkdirAll(filepath.Dir(logFilePath), logDirMode)
 	if err != nil {
@@ -32,9 +32,11 @@ func NewLogger(logFilePath string, debugMode bool) (*Logger, error) {
 	}
 	if debugMode {
 		logOptions.Level = slog.LevelDebug
-		logOptions.AddSource = true
 	} else {
 		logOptions.Level = slog.LevelInfo
+	}
+	if enableSourceLogging {
+		logOptions.AddSource = true
 	}
 
 	// Make the logger
@@ -49,6 +51,15 @@ func (l *Logger) Close() {
 	if l.logFile != nil {
 		l.logFile.Close()
 		l.logFile = nil
+	}
+}
+
+// Create a clone of the logger that prints each message with the "origin" attribute.
+// The underlying file handle isn't copied, so calling Close() on the sublogger won't do anything.
+func (l *Logger) CreateSubLogger(origin string) *Logger {
+	return &Logger{
+		Logger:  l.With(slog.String(OriginKey, origin)),
+		logFile: nil,
 	}
 }
 

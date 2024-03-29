@@ -2,6 +2,7 @@ package log
 
 // API keys
 const (
+	OriginKey string = "origin"
 	MethodKey string = "method"
 	PathKey   string = "path"
 	QueryKey  string = "query"

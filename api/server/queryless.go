@@ -47,12 +47,12 @@ func RegisterQuerylessGet[ContextType IQuerylessCallContext[DataType], DataType 
 	router *mux.Router,
 	functionName string,
 	factory IQuerylessGetContextFactory[ContextType, DataType],
+	logger *log.Logger,
 	serviceProvider *services.ServiceProvider,
 ) {
 	router.HandleFunc(fmt.Sprintf("/%s", functionName), func(w http.ResponseWriter, r *http.Request) {
 		// Log
 		args := r.URL.Query()
-		logger := serviceProvider.GetApiLogger()
 		logger.Info("Request", slog.String(log.MethodKey, r.Method), slog.String(log.PathKey, r.URL.Path))
 		logger.Debug("Full query", slog.String(log.QueryKey, r.URL.String()))
 
@@ -81,11 +81,11 @@ func RegisterQuerylessPost[ContextType IQuerylessCallContext[DataType], BodyType
 	router *mux.Router,
 	functionName string,
 	factory IQuerylessPostContextFactory[ContextType, BodyType, DataType],
+	logger *log.Logger,
 	serviceProvider *services.ServiceProvider,
 ) {
 	router.HandleFunc(fmt.Sprintf("/%s", functionName), func(w http.ResponseWriter, r *http.Request) {
 		// Log
-		logger := serviceProvider.GetApiLogger()
 		logger.Info("Request", slog.String(log.MethodKey, r.Method), slog.String(log.PathKey, r.URL.Path))
 
 		// Check the method

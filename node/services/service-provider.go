@@ -31,29 +31,27 @@ type ServiceProvider struct {
 	queryMgr   *eth.QueryManager
 
 	// Context for cancelling long operations
-	baseCtx   context.Context
-	apiCtx    context.Context
-	daemonCtx context.Context
-	cancel    context.CancelFunc
+	ctx    context.Context
+	cancel context.CancelFunc
 
 	// Logging
-	debugMode    bool
-	apiLogger    *log.Logger
-	daemonLogger *log.Logger
+	debugMode   bool
+	apiLogger   *log.Logger
+	tasksLogger *log.Logger
 }
 
 // Creates a new ServiceProvider instance
 func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMode bool) (*ServiceProvider, error) {
 	// Make the API logger
-	apiLogger, err := log.NewLogger(cfg.GetApiLogFilePath(), debugMode)
+	apiLogger, err := log.NewLogger(cfg.GetApiLogFilePath(), debugMode, false)
 	if err != nil {
 		return nil, fmt.Errorf("error creating API logger: %w", err)
 	}
 
-	// Make the Daemon logger
-	daemonLogger, err := log.NewLogger(cfg.GetDaemonLogFilePath(), debugMode)
+	// Make the tasks logger
+	tasksLogger, err := log.NewLogger(cfg.GetTasksLogFilePath(), debugMode, false)
 	if err != nil {
-		return nil, fmt.Errorf("error creating daemon logger: %w", err)
+		return nil, fmt.Errorf("error creating tasks logger: %w", err)
 	}
 
 	// Wallet
@@ -61,7 +59,7 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMo
 	nodeAddressPath := filepath.Join(cfg.GetNodeAddressFilePath())
 	walletDataPath := filepath.Join(cfg.GetWalletFilePath())
 	passwordPath := filepath.Join(cfg.GetPasswordFilePath())
-	nodeWallet, err := wallet.NewWallet(daemonLogger, walletDataPath, nodeAddressPath, passwordPath, resources.ChainID)
+	nodeWallet, err := wallet.NewWallet(tasksLogger, walletDataPath, nodeAddressPath, passwordPath, resources.ChainID)
 	if err != nil {
 		return nil, fmt.Errorf("error creating node wallet: %w", err)
 	}
@@ -101,26 +99,22 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMo
 
 	// Context for handling task cancellation during shutdown
 	ctx, cancel := context.WithCancel(context.Background())
-	apiCtx := apiLogger.CreateContextWithLogger(ctx)
-	daemonCtx := daemonLogger.CreateContextWithLogger(ctx)
 
 	// Create the provider
 	provider := &ServiceProvider{
-		cfg:          cfg,
-		resources:    resources,
-		nodeWallet:   nodeWallet,
-		ecManager:    ecManager,
-		bcManager:    bcManager,
-		docker:       dockerClient,
-		txMgr:        txMgr,
-		queryMgr:     queryMgr,
-		baseCtx:      ctx,
-		apiCtx:       apiCtx,
-		daemonCtx:    daemonCtx,
-		cancel:       cancel,
-		debugMode:    debugMode,
-		apiLogger:    apiLogger,
-		daemonLogger: daemonLogger,
+		cfg:         cfg,
+		resources:   resources,
+		nodeWallet:  nodeWallet,
+		ecManager:   ecManager,
+		bcManager:   bcManager,
+		docker:      dockerClient,
+		txMgr:       txMgr,
+		queryMgr:    queryMgr,
+		ctx:         ctx,
+		cancel:      cancel,
+		debugMode:   debugMode,
+		apiLogger:   apiLogger,
+		tasksLogger: tasksLogger,
 	}
 	return provider, nil
 }
@@ -128,7 +122,7 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMo
 // Closes the service provider and its underlying services
 func (p *ServiceProvider) Close() {
 	p.apiLogger.Close()
-	p.daemonLogger.Close()
+	p.tasksLogger.Close()
 }
 
 // ===============
@@ -171,20 +165,16 @@ func (p *ServiceProvider) GetApiLogger() *log.Logger {
 	return p.apiLogger
 }
 
-func (p *ServiceProvider) GetDaemonLogger() *log.Logger {
-	return p.daemonLogger
+func (p *ServiceProvider) GetTasksLogger() *log.Logger {
+	return p.tasksLogger
 }
 
 func (p *ServiceProvider) IsDebugMode() bool {
 	return p.debugMode
 }
 
-func (p *ServiceProvider) GetApiContext() context.Context {
-	return p.apiCtx
-}
-
-func (p *ServiceProvider) GetDaemonContext() context.Context {
-	return p.daemonCtx
+func (p *ServiceProvider) GetBaseContext() context.Context {
+	return p.ctx
 }
 
 func (p *ServiceProvider) CancelContextOnShutdown() {

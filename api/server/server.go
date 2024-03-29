@@ -39,6 +39,7 @@ func NewApiServer(logger *log.Logger, socketPath string, handlers []IHandler, ba
 
 	// Create the manager
 	server := &ApiServer{
+		logger:     logger,
 		handlers:   handlers,
 		socketPath: socketPath,
 		router:     router,

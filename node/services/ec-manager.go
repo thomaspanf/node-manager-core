@@ -27,9 +27,6 @@ type ExecutionClientManager struct {
 	timeout         time.Duration
 }
 
-// This is a signature for a wrapped ethclient.Client function
-type ecFunction[ReturnType any] func(*ethclient.Client) (ReturnType, error)
-
 // Creates a new ExecutionClientManager instance
 func NewExecutionClientManager(primaryEcUrl string, fallbackEcUrl string, chainID uint, clientTimeout time.Duration) (*ExecutionClientManager, error) {
 	primaryEc, err := ethclient.Dial(primaryEcUrl)
