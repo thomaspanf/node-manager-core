@@ -53,8 +53,8 @@ func RegisterQuerylessGet[ContextType IQuerylessCallContext[DataType], DataType 
 	router.HandleFunc(fmt.Sprintf("/%s", functionName), func(w http.ResponseWriter, r *http.Request) {
 		// Log
 		args := r.URL.Query()
-		logger.Info("Request", slog.String(log.MethodKey, r.Method), slog.String(log.PathKey, r.URL.Path))
-		logger.Debug("Full query", slog.String(log.QueryKey, r.URL.String()))
+		logger.Info("New request", slog.String(log.MethodKey, r.Method), slog.String(log.PathKey, r.URL.Path))
+		logger.Debug("Request params:", slog.String(log.QueryKey, r.URL.RawQuery))
 
 		// Check the method
 		if r.Method != http.MethodGet {
@@ -86,7 +86,7 @@ func RegisterQuerylessPost[ContextType IQuerylessCallContext[DataType], BodyType
 ) {
 	router.HandleFunc(fmt.Sprintf("/%s", functionName), func(w http.ResponseWriter, r *http.Request) {
 		// Log
-		logger.Info("Request", slog.String(log.MethodKey, r.Method), slog.String(log.PathKey, r.URL.Path))
+		logger.Info("New request", slog.String(log.MethodKey, r.Method), slog.String(log.PathKey, r.URL.Path))
 
 		// Check the method
 		if r.Method != http.MethodPost {
@@ -100,7 +100,7 @@ func RegisterQuerylessPost[ContextType IQuerylessCallContext[DataType], BodyType
 			HandleInputError(logger, w, fmt.Errorf("error reading request body: %w", err))
 			return
 		}
-		logger.Debug("Body", slog.String(log.BodyKey, string(bodyBytes)))
+		logger.Debug("Request body:", slog.String(log.BodyKey, string(bodyBytes)))
 
 		// Deserialize the body
 		var body BodyType

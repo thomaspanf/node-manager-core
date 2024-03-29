@@ -12,6 +12,7 @@ import (
 type Logger struct {
 	*slog.Logger
 	logFile *os.File
+	path    string
 }
 
 // Creates a new logger
@@ -43,7 +44,12 @@ func NewLogger(logFilePath string, debugMode bool, enableSourceLogging bool) (*L
 	return &Logger{
 		Logger:  slog.New(slog.NewTextHandler(logFile, logOptions)),
 		logFile: logFile,
+		path:    logFilePath,
 	}, nil
+}
+
+func (l *Logger) GetFilePath() string {
+	return l.path
 }
 
 // Closes the log file

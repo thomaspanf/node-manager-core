@@ -82,31 +82,31 @@ func HandleSuccess(logger *log.Logger, w http.ResponseWriter, response any) {
 	}
 
 	// Write it
-	logger.Debug(string(bytes))
+	logger.Debug("Response body", slog.String(log.BodyKey, string(bytes)))
 	writeResponse(w, logger, http.StatusOK, "", nil, bytes)
 }
 
 // Handles an API response for a request that could not be completed
-func HandleFailedResponse(log *log.Logger, w http.ResponseWriter, status types.ResponseStatus, err error) {
+func HandleFailedResponse(logger *log.Logger, w http.ResponseWriter, status types.ResponseStatus, err error) {
 	switch status {
 	case types.ResponseStatus_InvalidArguments:
-		HandleInputError(log, w, err)
+		HandleInputError(logger, w, err)
 	case types.ResponseStatus_AddressNotPresent:
-		HandleAddressNotPresent(log, w, err)
+		HandleAddressNotPresent(logger, w, err)
 	case types.ResponseStatus_WalletNotReady:
-		HandleWalletNotReady(log, w, err)
+		HandleWalletNotReady(logger, w, err)
 	case types.ResponseStatus_ResourceConflict:
-		HandleResourceConflict(log, w, err)
+		HandleResourceConflict(logger, w, err)
 	case types.ResponseStatus_ResourceNotFound:
-		HandleResourceNotFound(log, w, err)
+		HandleResourceNotFound(logger, w, err)
 	case types.ResponseStatus_ClientsNotSynced:
-		HandleClientNotSynced(log, w, err)
+		HandleClientNotSynced(logger, w, err)
 	case types.ResponseStatus_InvalidChainState:
-		HandleInvalidChainState(log, w, err)
+		HandleInvalidChainState(logger, w, err)
 	case types.ResponseStatus_Error:
-		HandleServerError(log, w, err)
+		HandleServerError(logger, w, err)
 	default:
-		HandleServerError(log, w, fmt.Errorf("unknown response status: %d", status))
+		HandleServerError(logger, w, fmt.Errorf("unknown response status: %d", status))
 	}
 }
 
@@ -135,7 +135,7 @@ func writeResponse(w http.ResponseWriter, logger *log.Logger, statusCode int, ca
 	}
 
 	// Log the response
-	logMsg := "Response"
+	logMsg := "Responded with:"
 	switch statusCode {
 	case http.StatusOK:
 		logger.Info(logMsg, attrs...)
