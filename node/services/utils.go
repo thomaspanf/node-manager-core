@@ -2,6 +2,9 @@ package services
 
 import (
 	"context"
+	"errors"
+	"net"
+	"syscall"
 	"time"
 
 	"github.com/rocket-pool/node-manager-core/eth"
@@ -36,4 +39,14 @@ func GetEthClientLatestBlockTimestamp(ec eth.IExecutionClient) (uint64, error) {
 
 	// Return block timestamp
 	return header.Time, nil
+}
+
+// Returns true if the error was a connection failure and a backup client is available
+func isDisconnected(err error) bool {
+	var sysErr syscall.Errno
+	if errors.As(err, &sysErr) {
+		return true
+	}
+	var netErr net.Error
+	return errors.As(err, &netErr)
 }
