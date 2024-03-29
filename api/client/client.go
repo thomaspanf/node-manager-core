@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -16,7 +17,7 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/rocket-pool/node-manager-core/api/types"
 	"github.com/rocket-pool/node-manager-core/beacon"
-	"github.com/rocket-pool/node-manager-core/utils/log"
+	"github.com/rocket-pool/node-manager-core/log"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/fatih/color"
@@ -35,11 +36,8 @@ type RequesterContext struct {
 	// An HTTP Client for sending requests
 	Client *http.Client
 
-	// Whether or not to print debug logs
-	DebugMode bool
-
 	// Logger to print debug messages to
-	Log *log.ColorLogger
+	Log *slog.Logger
 
 	// The base route for the client to send requests to (<http://<base>/<route>/<method>)
 	Base string
@@ -58,23 +56,19 @@ type IRequester interface {
 }
 
 // Creates a new API client context
-func NewRequesterContext(baseRoute string, socketPath string, debugMode bool) *RequesterContext {
+func NewRequesterContext(baseRoute string, socketPath string, log *slog.Logger) *RequesterContext {
 	requesterContext := &RequesterContext{
 		SocketPath: socketPath,
-		DebugMode:  debugMode,
 		Base:       baseRoute,
-	}
-
-	requesterContext.Client = &http.Client{
-		Transport: &http.Transport{
-			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				return net.Dial("unix", socketPath)
+		Log:        log,
+		Client: &http.Client{
+			Transport: &http.Transport{
+				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+					return net.Dial("unix", socketPath)
+				},
 			},
 		},
 	}
-
-	log := log.NewColorLogger(apiColor)
-	requesterContext.Log = &log
 
 	return requesterContext
 }
@@ -113,9 +107,7 @@ func RawGetRequest[DataType any](context *RequesterContext, path string, params 
 	req.URL.RawQuery = values.Encode()
 
 	// Debug log
-	if context.DebugMode {
-		context.Log.Printlnf("[DEBUG] Query: GET %s", req.URL.String())
-	}
+	context.Log.Debug("API Request", slog.String(log.MethodKey, http.MethodGet), slog.String(log.QueryKey, req.URL.String()))
 
 	// Run the request
 	resp, err := context.Client.Do(req)
@@ -146,10 +138,7 @@ func RawPostRequest[DataType any](context *RequesterContext, path string, body s
 	}
 
 	// Debug log
-	if context.DebugMode {
-		context.Log.Printlnf("[DEBUG] Query: POST %s", path)
-		context.Log.Printlnf("[DEBUG] Body: %s", body)
-	}
+	context.Log.Debug("API Request", slog.String(log.MethodKey, http.MethodPost), slog.String(log.PathKey, path), slog.String(log.BodyKey, body))
 
 	resp, err := context.Client.Post(fmt.Sprintf("http://%s/%s", context.Base, path), jsonContentType, strings.NewReader(body))
 	return HandleResponse[DataType](context, resp, path, err)
@@ -172,25 +161,18 @@ func HandleResponse[DataType any](context *RequesterContext, resp *http.Response
 	var parsedResponse types.ApiResponse[DataType]
 	err = json.Unmarshal(bytes, &parsedResponse)
 	if err != nil {
-		if context.DebugMode {
-			context.Log.Printlnf("[DEBUG] Response: Code %s, Body %s", resp.Status, string(bytes))
-		}
+		context.Log.Debug("API Response (raw)", slog.String(log.CodeKey, resp.Status), slog.String(log.BodyKey, string(bytes)))
 		return nil, fmt.Errorf("error deserializing response to %s: %w", path, err)
 	}
 
 	// Check if the request failed
 	if resp.StatusCode != http.StatusOK {
-		if context.DebugMode {
-			return nil, fmt.Errorf("server responded to %s with code %s: [%s]", path, resp.Status, parsedResponse.Error)
-		} else {
-			return nil, fmt.Errorf(parsedResponse.Error)
-		}
+		context.Log.Debug("API Response", slog.String(log.PathKey, path), slog.String(log.CodeKey, resp.Status), slog.String("err", parsedResponse.Error))
+		return nil, fmt.Errorf(parsedResponse.Error)
 	}
 
 	// Debug log
-	if context.DebugMode {
-		context.Log.Printlnf("[DEBUG] Response: %s", string(bytes))
-	}
+	context.Log.Debug("API Response", slog.String(log.BodyKey, string(bytes)))
 
 	return &parsedResponse, nil
 }

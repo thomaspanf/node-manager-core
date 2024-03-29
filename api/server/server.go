@@ -13,7 +13,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/gorilla/mux"
-	"github.com/rocket-pool/node-manager-core/utils/log"
+	"github.com/rocket-pool/node-manager-core/log"
 )
 
 const (
@@ -25,7 +25,7 @@ type IHandler interface {
 }
 
 type ApiServer struct {
-	log        log.ColorLogger
+	logger     *log.Logger
 	handlers   []IHandler
 	socketPath string
 	socket     net.Listener
@@ -33,13 +33,12 @@ type ApiServer struct {
 	router     *mux.Router
 }
 
-func NewApiServer(socketPath string, handlers []IHandler, baseRoute string, apiVersion string) (*ApiServer, error) {
+func NewApiServer(logger *log.Logger, socketPath string, handlers []IHandler, baseRoute string, apiVersion string) (*ApiServer, error) {
 	// Create the router
 	router := mux.NewRouter()
 
 	// Create the manager
 	server := &ApiServer{
-		log:        log.NewColorLogger(ApiLogColor),
 		handlers:   handlers,
 		socketPath: socketPath,
 		router:     router,
@@ -99,7 +98,7 @@ func (s *ApiServer) Start(wg *sync.WaitGroup, socketOwnerUid uint32, socketOwner
 	go func() {
 		err := s.server.Serve(socket)
 		if !errors.Is(err, http.ErrServerClosed) {
-			s.log.Printlnf("error while listening for HTTP requests: %s", err.Error())
+			s.logger.Error("error while listening for HTTP requests", log.Err(err))
 		}
 		wg.Done()
 	}()

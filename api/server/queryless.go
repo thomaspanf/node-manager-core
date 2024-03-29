@@ -3,12 +3,14 @@ package server
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/goccy/go-json"
 	"github.com/rocket-pool/node-manager-core/api/types"
+	"github.com/rocket-pool/node-manager-core/log"
 	"github.com/rocket-pool/node-manager-core/node/services"
 	"github.com/rocket-pool/node-manager-core/utils"
 
@@ -50,30 +52,26 @@ func RegisterQuerylessGet[ContextType IQuerylessCallContext[DataType], DataType 
 	router.HandleFunc(fmt.Sprintf("/%s", functionName), func(w http.ResponseWriter, r *http.Request) {
 		// Log
 		args := r.URL.Query()
-		isDebug := serviceProvider.IsDebugMode()
-		log := serviceProvider.GetApiLogger()
-		if isDebug {
-			log.Printlnf("[%s] => %s", r.Method, r.URL.String())
-		} else {
-			log.Printlnf("[%s] => %s", r.Method, r.URL.Path)
-		}
+		logger := serviceProvider.GetApiLogger()
+		logger.Info("Request", slog.String(log.MethodKey, r.Method), slog.String(log.PathKey, r.URL.Path))
+		logger.Debug("Full query", slog.String(log.QueryKey, r.URL.String()))
 
 		// Check the method
 		if r.Method != http.MethodGet {
-			HandleInvalidMethod(log, w)
+			HandleInvalidMethod(logger, w)
 			return
 		}
 
 		// Create the handler and deal with any input validation errors
 		context, err := factory.Create(args)
 		if err != nil {
-			HandleInputError(log, w, err)
+			HandleInputError(logger, w, err)
 			return
 		}
 
 		// Run the context's processing routine
 		status, response, err := runQuerylessRoute[DataType](context, serviceProvider)
-		HandleResponse(log, w, status, response, err, isDebug)
+		HandleResponse(logger, w, status, response, err)
 	})
 }
 
@@ -87,44 +85,41 @@ func RegisterQuerylessPost[ContextType IQuerylessCallContext[DataType], BodyType
 ) {
 	router.HandleFunc(fmt.Sprintf("/%s", functionName), func(w http.ResponseWriter, r *http.Request) {
 		// Log
-		log := serviceProvider.GetApiLogger()
-		isDebug := serviceProvider.IsDebugMode()
-		log.Printlnf("[%s] => %s", r.Method, r.URL.Path)
+		logger := serviceProvider.GetApiLogger()
+		logger.Info("Request", slog.String(log.MethodKey, r.Method), slog.String(log.PathKey, r.URL.Path))
 
 		// Check the method
 		if r.Method != http.MethodPost {
-			HandleInvalidMethod(log, w)
+			HandleInvalidMethod(logger, w)
 			return
 		}
 
 		// Read the body
 		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
-			HandleInputError(log, w, fmt.Errorf("error reading request body: %w", err))
+			HandleInputError(logger, w, fmt.Errorf("error reading request body: %w", err))
 			return
 		}
-		if isDebug {
-			log.Printlnf("BODY: %s", string(bodyBytes))
-		}
+		logger.Debug("Body", slog.String(log.BodyKey, string(bodyBytes)))
 
 		// Deserialize the body
 		var body BodyType
 		err = json.Unmarshal(bodyBytes, &body)
 		if err != nil {
-			HandleInputError(log, w, fmt.Errorf("error deserializing request body: %w", err))
+			HandleInputError(logger, w, fmt.Errorf("error deserializing request body: %w", err))
 			return
 		}
 
 		// Create the handler and deal with any input validation errors
 		context, err := factory.Create(body)
 		if err != nil {
-			HandleInputError(log, w, err)
+			HandleInputError(logger, w, err)
 			return
 		}
 
 		// Run the context's processing routine
 		status, response, err := runQuerylessRoute[DataType](context, serviceProvider)
-		HandleResponse(log, w, status, response, err, isDebug)
+		HandleResponse(logger, w, status, response, err)
 	})
 }
 

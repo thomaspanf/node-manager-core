@@ -3,25 +3,19 @@ package services
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"os"
 	"path/filepath"
 	"runtime"
 	"time"
 
 	"github.com/docker/docker/client"
-	"github.com/fatih/color"
 	"github.com/rocket-pool/node-manager-core/config"
 	"github.com/rocket-pool/node-manager-core/eth"
+	"github.com/rocket-pool/node-manager-core/log"
 	"github.com/rocket-pool/node-manager-core/node/wallet"
-	"github.com/rocket-pool/node-manager-core/utils/log"
 )
 
 const (
-	DockerApiVersion string          = "1.40"
-	apiLogColor      color.Attribute = color.FgHiCyan
-	walletLogColor   color.Attribute = color.FgHiGreen
-	debugLogColor    color.Attribute = color.FgYellow
+	DockerApiVersion string = "1.40"
 )
 
 // A container for all of the various services used by the node service
@@ -35,29 +29,39 @@ type ServiceProvider struct {
 	docker     *client.Client
 	txMgr      *eth.TransactionManager
 	queryMgr   *eth.QueryManager
-	debugMode  bool
-	ctx        context.Context
-	cancel     context.CancelFunc
 
-	// TODO: find a better place for this than the common service provider
-	apiLogger    *log.ColorLogger
-	walletLogger *log.ColorLogger
-	debugLogger  *slog.Logger
+	// Context for cancelling long operations
+	baseCtx   context.Context
+	apiCtx    context.Context
+	daemonCtx context.Context
+	cancel    context.CancelFunc
+
+	// Logging
+	debugMode    bool
+	apiLogger    *log.Logger
+	daemonLogger *log.Logger
 }
 
 // Creates a new ServiceProvider instance
 func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMode bool) (*ServiceProvider, error) {
-	// Loggers
-	apiLogger := log.NewColorLogger(apiLogColor)
-	walletLogger := log.NewColorLogger(walletLogColor)
-	debugLogger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	// Make the API logger
+	apiLogger, err := log.NewLogger(cfg.GetApiLogFilePath(), debugMode)
+	if err != nil {
+		return nil, fmt.Errorf("error creating API logger: %w", err)
+	}
+
+	// Make the Daemon logger
+	daemonLogger, err := log.NewLogger(cfg.GetDaemonLogFilePath(), debugMode)
+	if err != nil {
+		return nil, fmt.Errorf("error creating daemon logger: %w", err)
+	}
 
 	// Wallet
 	resources := cfg.GetNetworkResources()
 	nodeAddressPath := filepath.Join(cfg.GetNodeAddressFilePath())
 	walletDataPath := filepath.Join(cfg.GetWalletFilePath())
 	passwordPath := filepath.Join(cfg.GetPasswordFilePath())
-	nodeWallet, err := wallet.NewWallet(&walletLogger, walletDataPath, nodeAddressPath, passwordPath, resources.ChainID)
+	nodeWallet, err := wallet.NewWallet(daemonLogger, walletDataPath, nodeAddressPath, passwordPath, resources.ChainID)
 	if err != nil {
 		return nil, fmt.Errorf("error creating node wallet: %w", err)
 	}
@@ -97,6 +101,8 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMo
 
 	// Context for handling task cancellation during shutdown
 	ctx, cancel := context.WithCancel(context.Background())
+	apiCtx := apiLogger.CreateContextWithLogger(ctx)
+	daemonCtx := daemonLogger.CreateContextWithLogger(ctx)
 
 	// Create the provider
 	provider := &ServiceProvider{
@@ -108,14 +114,21 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMo
 		docker:       dockerClient,
 		txMgr:        txMgr,
 		queryMgr:     queryMgr,
-		apiLogger:    &apiLogger,
-		walletLogger: &walletLogger,
-		debugLogger:  debugLogger,
-		debugMode:    debugMode,
-		ctx:          ctx,
+		baseCtx:      ctx,
+		apiCtx:       apiCtx,
+		daemonCtx:    daemonCtx,
 		cancel:       cancel,
+		debugMode:    debugMode,
+		apiLogger:    apiLogger,
+		daemonLogger: daemonLogger,
 	}
 	return provider, nil
+}
+
+// Closes the service provider and its underlying services
+func (p *ServiceProvider) Close() {
+	p.apiLogger.Close()
+	p.daemonLogger.Close()
 }
 
 // ===============
@@ -154,16 +167,24 @@ func (p *ServiceProvider) GetQueryManager() *eth.QueryManager {
 	return p.queryMgr
 }
 
-func (p *ServiceProvider) GetApiLogger() *log.ColorLogger {
+func (p *ServiceProvider) GetApiLogger() *log.Logger {
 	return p.apiLogger
+}
+
+func (p *ServiceProvider) GetDaemonLogger() *log.Logger {
+	return p.daemonLogger
 }
 
 func (p *ServiceProvider) IsDebugMode() bool {
 	return p.debugMode
 }
 
-func (p *ServiceProvider) GetContext() context.Context {
-	return p.ctx
+func (p *ServiceProvider) GetApiContext() context.Context {
+	return p.apiCtx
+}
+
+func (p *ServiceProvider) GetDaemonContext() context.Context {
+	return p.daemonCtx
 }
 
 func (p *ServiceProvider) CancelContextOnShutdown() {

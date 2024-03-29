@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/goccy/go-json"
-	"github.com/rocket-pool/node-manager-core/utils/log"
+	"github.com/rocket-pool/node-manager-core/log"
 	"github.com/rocket-pool/node-manager-core/wallet"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -39,7 +39,7 @@ type Wallet struct {
 }
 
 // Create new wallet
-func NewWallet(log *log.ColorLogger, walletDataPath string, walletAddressPath string, passwordFilePath string, chainID uint) (*Wallet, error) {
+func NewWallet(logger *log.Logger, walletDataPath string, walletAddressPath string, passwordFilePath string, chainID uint) (*Wallet, error) {
 	// Create the wallet
 	w := &Wallet{
 		// Create managers
@@ -60,8 +60,8 @@ func NewWallet(log *log.ColorLogger, walletDataPath string, walletAddressPath st
 	// Load the wallet
 	if isPasswordSaved {
 		walletMgr, err := w.loadWalletData(password)
-		if err != nil {
-			log.Printlnf("[WALLET] Loading wallet with stored node password failed: %s", err.Error())
+		if err != nil && logger != nil {
+			logger.Warn("[WALLET] Loading wallet with stored node password failed", log.Err(err))
 		} else if walletMgr != nil {
 			w.walletManager = walletMgr
 		}
