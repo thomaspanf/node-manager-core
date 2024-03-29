@@ -6,12 +6,14 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // Logger is a simple wrapper for a slog Logger that writes to a file on disk.
 type Logger struct {
 	*slog.Logger
-	logFile *os.File
+	logFile *lumberjack.Logger
 	path    string
 }
 
@@ -22,9 +24,11 @@ func NewLogger(logFilePath string, debugMode bool, enableSourceLogging bool) (*L
 	if err != nil {
 		return nil, fmt.Errorf("error creating API log directory for [%s]: %w", logFilePath, err)
 	}
-	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, logFileMode)
-	if err != nil {
-		return nil, fmt.Errorf("error creating API log file [%s]: %w", logFilePath, err)
+	logFile := &lumberjack.Logger{
+		Filename:   logFilePath,
+		MaxSize:    MaxLogSize,
+		MaxBackups: MaxLogBackups,
+		MaxAge:     MaxLogAge,
 	}
 
 	// Create the logging options
@@ -48,8 +52,14 @@ func NewLogger(logFilePath string, debugMode bool, enableSourceLogging bool) (*L
 	}, nil
 }
 
+// Get the path of the file this logger is writing to
 func (l *Logger) GetFilePath() string {
 	return l.path
+}
+
+// Rotate the log file, migrating the current file to an old backup and starting a new one
+func (l *Logger) Rotate() error {
+	return l.logFile.Rotate()
 }
 
 // Closes the log file
