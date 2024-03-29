@@ -28,7 +28,7 @@ func NewLogger(logFilePath string, debugMode bool, enableSourceLogging bool) (*L
 
 	// Create the logging options
 	logOptions := &slog.HandlerOptions{
-		ReplaceAttr: replaceTime,
+		ReplaceAttr: ReplaceTime,
 	}
 	if debugMode {
 		logOptions.Level = slog.LevelDebug
