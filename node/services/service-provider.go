@@ -100,6 +100,10 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMo
 	// Context for handling task cancellation during shutdown
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// Log startup
+	apiLogger.Info("Starting API logger.")
+	tasksLogger.Info("Starting Tasks logger.")
+
 	// Create the provider
 	provider := &ServiceProvider{
 		cfg:         cfg,

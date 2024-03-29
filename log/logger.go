@@ -55,6 +55,7 @@ func (l *Logger) GetFilePath() string {
 // Closes the log file
 func (l *Logger) Close() {
 	if l.logFile != nil {
+		l.Info("Shutting down.")
 		l.logFile.Close()
 		l.logFile = nil
 	}
