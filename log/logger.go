@@ -18,7 +18,7 @@ type Logger struct {
 }
 
 // Creates a new logger
-func NewLogger(logFilePath string, debugMode bool, enableSourceLogging bool) (*Logger, error) {
+func NewLogger(logFilePath string, options LoggerOptions) (*Logger, error) {
 	// Make the file
 	err := os.MkdirAll(filepath.Dir(logFilePath), logDirMode)
 	if err != nil {
@@ -26,27 +26,30 @@ func NewLogger(logFilePath string, debugMode bool, enableSourceLogging bool) (*L
 	}
 	logFile := &lumberjack.Logger{
 		Filename:   logFilePath,
-		MaxSize:    MaxLogSize,
-		MaxBackups: MaxLogBackups,
-		MaxAge:     MaxLogAge,
+		MaxSize:    options.MaxSize,
+		MaxBackups: options.MaxBackups,
+		MaxAge:     options.MaxAge,
+		LocalTime:  options.LocalTime,
+		Compress:   options.Compress,
 	}
 
 	// Create the logging options
 	logOptions := &slog.HandlerOptions{
+		AddSource:   options.AddSource,
+		Level:       options.Level,
 		ReplaceAttr: ReplaceTime,
-	}
-	if debugMode {
-		logOptions.Level = slog.LevelDebug
-	} else {
-		logOptions.Level = slog.LevelInfo
-	}
-	if enableSourceLogging {
-		logOptions.AddSource = true
 	}
 
 	// Make the logger
+	var handler slog.Handler
+	switch options.Format {
+	case LogFormat_Json:
+		handler = slog.NewJSONHandler(logFile, logOptions)
+	case LogFormat_Logfmt:
+		handler = slog.NewTextHandler(logFile, logOptions)
+	}
 	return &Logger{
-		Logger:  slog.New(slog.NewTextHandler(logFile, logOptions)),
+		Logger:  slog.New(handler),
 		logFile: logFile,
 		path:    logFilePath,
 	}, nil

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -25,7 +26,7 @@ type IHandler interface {
 }
 
 type ApiServer struct {
-	logger     *log.Logger
+	logger     *slog.Logger
 	handlers   []IHandler
 	socketPath string
 	socket     net.Listener
@@ -33,7 +34,7 @@ type ApiServer struct {
 	router     *mux.Router
 }
 
-func NewApiServer(logger *log.Logger, socketPath string, handlers []IHandler, baseRoute string, apiVersion string) (*ApiServer, error) {
+func NewApiServer(logger *slog.Logger, socketPath string, handlers []IHandler, baseRoute string, apiVersion string) (*ApiServer, error) {
 	// Create the router
 	router := mux.NewRouter()
 

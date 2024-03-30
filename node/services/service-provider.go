@@ -43,13 +43,14 @@ type ServiceProvider struct {
 // Creates a new ServiceProvider instance
 func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMode bool) (*ServiceProvider, error) {
 	// Make the API logger
-	apiLogger, err := log.NewLogger(cfg.GetApiLogFilePath(), debugMode, false)
+	loggerOpts := cfg.GetLoggerOptions()
+	apiLogger, err := log.NewLogger(cfg.GetApiLogFilePath(), loggerOpts)
 	if err != nil {
 		return nil, fmt.Errorf("error creating API logger: %w", err)
 	}
 
 	// Make the tasks logger
-	tasksLogger, err := log.NewLogger(cfg.GetTasksLogFilePath(), debugMode, false)
+	tasksLogger, err := log.NewLogger(cfg.GetTasksLogFilePath(), loggerOpts)
 	if err != nil {
 		return nil, fmt.Errorf("error creating tasks logger: %w", err)
 	}
@@ -59,7 +60,7 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMo
 	nodeAddressPath := filepath.Join(cfg.GetNodeAddressFilePath())
 	walletDataPath := filepath.Join(cfg.GetWalletFilePath())
 	passwordPath := filepath.Join(cfg.GetPasswordFilePath())
-	nodeWallet, err := wallet.NewWallet(tasksLogger, walletDataPath, nodeAddressPath, passwordPath, resources.ChainID)
+	nodeWallet, err := wallet.NewWallet(tasksLogger.Logger, walletDataPath, nodeAddressPath, passwordPath, resources.ChainID)
 	if err != nil {
 		return nil, fmt.Errorf("error creating node wallet: %w", err)
 	}

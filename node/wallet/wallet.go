@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"math/big"
 	"os"
 
@@ -39,7 +40,7 @@ type Wallet struct {
 }
 
 // Create new wallet
-func NewWallet(logger *log.Logger, walletDataPath string, walletAddressPath string, passwordFilePath string, chainID uint) (*Wallet, error) {
+func NewWallet(logger *slog.Logger, walletDataPath string, walletAddressPath string, passwordFilePath string, chainID uint) (*Wallet, error) {
 	// Create the wallet
 	w := &Wallet{
 		// Create managers

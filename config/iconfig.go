@@ -1,5 +1,7 @@
 package config
 
+import "github.com/rocket-pool/node-manager-core/log"
+
 // NMC servers typically provide some kind of persistent configuration; it must implement this interface.
 type IConfig interface {
 	IConfigSection
@@ -27,4 +29,7 @@ type IConfig interface {
 
 	// The URLs for the Beacon nodes to use
 	GetBeaconNodeUrls() (string, string)
+
+	// The configuration for the daemon loggers
+	GetLoggerOptions() log.LoggerOptions
 }

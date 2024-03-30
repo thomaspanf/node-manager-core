@@ -47,7 +47,7 @@ func RegisterQuerylessGet[ContextType IQuerylessCallContext[DataType], DataType 
 	router *mux.Router,
 	functionName string,
 	factory IQuerylessGetContextFactory[ContextType, DataType],
-	logger *log.Logger,
+	logger *slog.Logger,
 	serviceProvider *services.ServiceProvider,
 ) {
 	router.HandleFunc(fmt.Sprintf("/%s", functionName), func(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +81,7 @@ func RegisterQuerylessPost[ContextType IQuerylessCallContext[DataType], BodyType
 	router *mux.Router,
 	functionName string,
 	factory IQuerylessPostContextFactory[ContextType, BodyType, DataType],
-	logger *log.Logger,
+	logger *slog.Logger,
 	serviceProvider *services.ServiceProvider,
 ) {
 	router.HandleFunc(fmt.Sprintf("/%s", functionName), func(w http.ResponseWriter, r *http.Request) {
