@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	batch "github.com/rocket-pool/batch-query"
 	"github.com/rocket-pool/node-manager-core/api/types"
+	"github.com/rocket-pool/node-manager-core/log"
 	"github.com/rocket-pool/node-manager-core/node/services"
 	"github.com/rocket-pool/node-manager-core/utils"
 )
@@ -49,35 +51,31 @@ func RegisterSingleStageRoute[ContextType ISingleStageCallContext[DataType], Dat
 	router *mux.Router,
 	functionName string,
 	factory ISingleStageGetContextFactory[ContextType, DataType],
+	logger *slog.Logger,
 	serviceProvider *services.ServiceProvider,
 ) {
 	router.HandleFunc(fmt.Sprintf("/%s", functionName), func(w http.ResponseWriter, r *http.Request) {
 		// Log
 		args := r.URL.Query()
-		log := serviceProvider.GetApiLogger()
-		isDebug := serviceProvider.IsDebugMode()
-		if isDebug {
-			log.Printlnf("[%s] => %s", r.Method, r.URL.String())
-		} else {
-			log.Printlnf("[%s] => %s", r.Method, r.URL.Path)
-		}
+		logger.Info("Request", slog.String(log.MethodKey, r.Method), slog.String(log.PathKey, r.URL.Path))
+		logger.Debug("Params", slog.String(log.QueryKey, r.URL.RawQuery))
 
 		// Check the method
 		if r.Method != http.MethodGet {
-			HandleInvalidMethod(log, w)
+			HandleInvalidMethod(logger, w)
 			return
 		}
 
 		// Create the handler and deal with any input validation errors
 		context, err := factory.Create(args)
 		if err != nil {
-			HandleInputError(log, w, err)
+			HandleInputError(logger, w, err)
 			return
 		}
 
 		// Run the context's processing routine
 		status, response, err := runSingleStageRoute[DataType](context, serviceProvider)
-		HandleResponse(log, w, status, response, err, isDebug)
+		HandleResponse(logger, w, status, response, err)
 	})
 }
 
@@ -87,48 +85,45 @@ func RegisterSingleStagePost[ContextType ISingleStageCallContext[DataType], Body
 	router *mux.Router,
 	functionName string,
 	factory ISingleStagePostContextFactory[ContextType, BodyType, DataType],
+	logger *slog.Logger,
 	serviceProvider *services.ServiceProvider,
 ) {
 	router.HandleFunc(fmt.Sprintf("/%s", functionName), func(w http.ResponseWriter, r *http.Request) {
 		// Log
-		log := serviceProvider.GetApiLogger()
-		isDebug := serviceProvider.IsDebugMode()
-		log.Printlnf("[%s] => %s", r.Method, r.URL.Path)
+		logger.Info("Request", slog.String(log.MethodKey, r.Method), slog.String(log.PathKey, r.URL.Path))
 
 		// Check the method
 		if r.Method != http.MethodPost {
-			HandleInvalidMethod(log, w)
+			HandleInvalidMethod(logger, w)
 			return
 		}
 
 		// Read the body
 		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
-			HandleInputError(log, w, fmt.Errorf("error reading request body: %w", err))
+			HandleInputError(logger, w, fmt.Errorf("error reading request body: %w", err))
 			return
 		}
-		if isDebug {
-			log.Println(string(bodyBytes))
-		}
+		logger.Debug("Body", slog.String(log.BodyKey, string(bodyBytes)))
 
 		// Deserialize the body
 		var body BodyType
 		err = json.Unmarshal(bodyBytes, &body)
 		if err != nil {
-			HandleInputError(log, w, fmt.Errorf("error deserializing request body: %w", err))
+			HandleInputError(logger, w, fmt.Errorf("error deserializing request body: %w", err))
 			return
 		}
 
 		// Create the handler and deal with any input validation errors
 		context, err := factory.Create(body)
 		if err != nil {
-			HandleInputError(log, w, err)
+			HandleInputError(logger, w, err)
 			return
 		}
 
 		// Run the context's processing routine
 		status, response, err := runSingleStageRoute[DataType](context, serviceProvider)
-		HandleResponse(log, w, status, response, err, isDebug)
+		HandleResponse(logger, w, status, response, err)
 	})
 }
 

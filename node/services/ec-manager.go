@@ -2,22 +2,17 @@ package services
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math"
 	"math/big"
-	"net"
-	"syscall"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/fatih/color"
 	apitypes "github.com/rocket-pool/node-manager-core/api/types"
 	"github.com/rocket-pool/node-manager-core/eth"
-	"github.com/rocket-pool/node-manager-core/utils/log"
 )
 
 // This is a proxy for multiple ETH clients, providing natural fallback support if one of them fails.
@@ -26,15 +21,11 @@ type ExecutionClientManager struct {
 	fallbackEcUrl   string
 	primaryEc       *ethclient.Client
 	fallbackEc      *ethclient.Client
-	logger          log.ColorLogger
 	primaryReady    bool
 	fallbackReady   bool
 	expectedChainID uint
 	timeout         time.Duration
 }
-
-// This is a signature for a wrapped ethclient.Client function
-type ecFunction func(*ethclient.Client) (any, error)
 
 // Creates a new ExecutionClientManager instance
 func NewExecutionClientManager(primaryEcUrl string, fallbackEcUrl string, chainID uint, clientTimeout time.Duration) (*ExecutionClientManager, error) {
@@ -57,12 +48,23 @@ func NewExecutionClientManager(primaryEcUrl string, fallbackEcUrl string, chainI
 		fallbackEcUrl:   fallbackEcUrl,
 		primaryEc:       primaryEc,
 		fallbackEc:      fallbackEc,
-		logger:          log.NewColorLogger(color.FgYellow),
 		primaryReady:    true,
 		fallbackReady:   fallbackEc != nil,
 		expectedChainID: chainID,
 		timeout:         clientTimeout,
 	}, nil
+}
+
+/// ========================
+/// IClientManager Functions
+/// ========================
+
+func (m *ExecutionClientManager) GetPrimaryClient() eth.IExecutionClient {
+	return m.primaryEc
+}
+
+func (m *ExecutionClientManager) GetFallbackClient() eth.IExecutionClient {
+	return m.fallbackEc
 }
 
 func (m *ExecutionClientManager) IsPrimaryReady() bool {
@@ -73,12 +75,20 @@ func (m *ExecutionClientManager) IsFallbackReady() bool {
 	return m.fallbackReady
 }
 
-func (m ExecutionClientManager) GetPrimaryExecutionClient() eth.IExecutionClient {
-	return m.primaryEc
+func (m *ExecutionClientManager) IsFallbackEnabled() bool {
+	return m.fallbackEc != nil
 }
 
-func (m ExecutionClientManager) GetFallbackExecutionClient() eth.IExecutionClient {
-	return m.fallbackEc
+func (m *ExecutionClientManager) GetClientTypeName() string {
+	return "Execution Client"
+}
+
+func (m *ExecutionClientManager) setPrimaryReady(ready bool) {
+	m.primaryReady = ready
+}
+
+func (m *ExecutionClientManager) setFallbackReady(ready bool) {
+	m.fallbackReady = ready
 }
 
 /// ========================
@@ -88,25 +98,17 @@ func (m ExecutionClientManager) GetFallbackExecutionClient() eth.IExecutionClien
 // CodeAt returns the code of the given account. This is needed to differentiate
 // between contract internal errors and the local chain being out of sync.
 func (m *ExecutionClientManager) CodeAt(ctx context.Context, contract common.Address, blockNumber *big.Int) ([]byte, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) ([]byte, error) {
 		return client.CodeAt(ctx, contract, blockNumber)
 	})
-	if err != nil {
-		return nil, err
-	}
-	return result.([]byte), err
 }
 
 // CallContract executes an Ethereum contract call with the specified data as the
 // input.
 func (m *ExecutionClientManager) CallContract(ctx context.Context, call ethereum.CallMsg, blockNumber *big.Int) ([]byte, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) ([]byte, error) {
 		return client.CallContract(ctx, call, blockNumber)
 	})
-	if err != nil {
-		return nil, err
-	}
-	return result.([]byte), err
 }
 
 /// ============================
@@ -115,71 +117,47 @@ func (m *ExecutionClientManager) CallContract(ctx context.Context, call ethereum
 
 // HeaderByHash returns the block header with the given hash.
 func (m *ExecutionClientManager) HeaderByHash(ctx context.Context, hash common.Hash) (*types.Header, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) (*types.Header, error) {
 		return client.HeaderByHash(ctx, hash)
 	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*types.Header), err
 }
 
 // HeaderByNumber returns a block header from the current canonical chain. If number is
 // nil, the latest known header is returned.
 func (m *ExecutionClientManager) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) (*types.Header, error) {
 		return client.HeaderByNumber(ctx, number)
 	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*types.Header), err
 }
 
 // PendingCodeAt returns the code of the given account in the pending state.
 func (m *ExecutionClientManager) PendingCodeAt(ctx context.Context, account common.Address) ([]byte, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) ([]byte, error) {
 		return client.PendingCodeAt(ctx, account)
 	})
-	if err != nil {
-		return nil, err
-	}
-	return result.([]byte), err
 }
 
 // PendingNonceAt retrieves the current pending nonce associated with an account.
 func (m *ExecutionClientManager) PendingNonceAt(ctx context.Context, account common.Address) (uint64, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) (uint64, error) {
 		return client.PendingNonceAt(ctx, account)
 	})
-	if err != nil {
-		return 0, err
-	}
-	return result.(uint64), err
 }
 
 // SuggestGasPrice retrieves the currently suggested gas price to allow a timely
 // execution of a transaction.
 func (m *ExecutionClientManager) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) (*big.Int, error) {
 		return client.SuggestGasPrice(ctx)
 	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*big.Int), err
 }
 
 // SuggestGasTipCap retrieves the currently suggested 1559 priority fee to allow
 // a timely execution of a transaction.
 func (m *ExecutionClientManager) SuggestGasTipCap(ctx context.Context) (*big.Int, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) (*big.Int, error) {
 		return client.SuggestGasTipCap(ctx)
 	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*big.Int), err
 }
 
 // EstimateGas tries to estimate the gas needed to execute a specific
@@ -187,22 +165,17 @@ func (m *ExecutionClientManager) SuggestGasTipCap(ctx context.Context) (*big.Int
 // There is no guarantee that this is the true gas limit requirement as other
 // transactions may be added or removed by miners, but it should provide a basis
 // for setting a reasonable default.
-func (m *ExecutionClientManager) EstimateGas(ctx context.Context, call ethereum.CallMsg) (gas uint64, err error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+func (m *ExecutionClientManager) EstimateGas(ctx context.Context, call ethereum.CallMsg) (uint64, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) (uint64, error) {
 		return client.EstimateGas(ctx, call)
 	})
-	if err != nil {
-		return 0, err
-	}
-	return result.(uint64), err
 }
 
 // SendTransaction injects the transaction into the pending pool for execution.
 func (m *ExecutionClientManager) SendTransaction(ctx context.Context, tx *types.Transaction) error {
-	_, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
-		return nil, client.SendTransaction(ctx, tx)
+	return runFunction0(m, ctx, func(client eth.IExecutionClient) error {
+		return client.SendTransaction(ctx, tx)
 	})
-	return err
 }
 
 /// ==========================
@@ -214,25 +187,17 @@ func (m *ExecutionClientManager) SendTransaction(ctx context.Context, tx *types.
 //
 // TODO(karalabe): Deprecate when the subscription one can return past data too.
 func (m *ExecutionClientManager) FilterLogs(ctx context.Context, query ethereum.FilterQuery) ([]types.Log, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) ([]types.Log, error) {
 		return client.FilterLogs(ctx, query)
 	})
-	if err != nil {
-		return nil, err
-	}
-	return result.([]types.Log), err
 }
 
 // SubscribeFilterLogs creates a background log filtering operation, returning
 // a subscription immediately, which can be used to stream the found events.
 func (m *ExecutionClientManager) SubscribeFilterLogs(ctx context.Context, query ethereum.FilterQuery, ch chan<- types.Log) (ethereum.Subscription, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) (ethereum.Subscription, error) {
 		return client.SubscribeFilterLogs(ctx, query, ch)
 	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(ethereum.Subscription), err
 }
 
 /// =======================
@@ -242,13 +207,9 @@ func (m *ExecutionClientManager) SubscribeFilterLogs(ctx context.Context, query 
 // TransactionReceipt returns the receipt of a transaction by transaction hash.
 // Note that the receipt is not available for pending transactions.
 func (m *ExecutionClientManager) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) (*types.Receipt, error) {
 		return client.TransactionReceipt(ctx, txHash)
 	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*types.Receipt), err
 }
 
 /// ================
@@ -257,68 +218,45 @@ func (m *ExecutionClientManager) TransactionReceipt(ctx context.Context, txHash 
 
 // BlockNumber returns the most recent block number
 func (m *ExecutionClientManager) BlockNumber(ctx context.Context) (uint64, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) (uint64, error) {
 		return client.BlockNumber(ctx)
 	})
-	if err != nil {
-		return 0, err
-	}
-	return result.(uint64), err
 }
 
 // BalanceAt returns the wei balance of the given account.
 // The block number can be nil, in which case the balance is taken from the latest known block.
 func (m *ExecutionClientManager) BalanceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (*big.Int, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) (*big.Int, error) {
 		return client.BalanceAt(ctx, account, blockNumber)
 	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*big.Int), err
 }
 
 // TransactionByHash returns the transaction with the given hash.
-func (m *ExecutionClientManager) TransactionByHash(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
-		tx, isPending, err := client.TransactionByHash(ctx, hash)
-		result := []any{tx, isPending}
-		return result, err
+func (m *ExecutionClientManager) TransactionByHash(ctx context.Context, hash common.Hash) (*types.Transaction, bool, error) {
+	return runFunction2(m, ctx, func(client eth.IExecutionClient) (*types.Transaction, bool, error) {
+		return client.TransactionByHash(ctx, hash)
 	})
-	if err != nil {
-		return nil, false, err
-	}
-
-	// TODO: Can we just use the named return values inside the closer to skip this?
-	resultArray := result.([]any)
-	tx = resultArray[0].(*types.Transaction)
-	isPending = resultArray[1].(bool)
-	return tx, isPending, err
 }
 
 // NonceAt returns the account nonce of the given account.
 // The block number can be nil, in which case the nonce is taken from the latest known block.
 func (m *ExecutionClientManager) NonceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) (uint64, error) {
 		return client.NonceAt(ctx, account, blockNumber)
 	})
-	if err != nil {
-		return 0, err
-	}
-	return result.(uint64), err
 }
 
 // SyncProgress retrieves the current progress of the sync algorithm. If there's
 // no sync currently running, it returns nil.
 func (m *ExecutionClientManager) SyncProgress(ctx context.Context) (*ethereum.SyncProgress, error) {
-	result, err := m.runFunction(ctx, func(client *ethclient.Client) (any, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) (*ethereum.SyncProgress, error) {
 		return client.SyncProgress(ctx)
 	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*ethereum.SyncProgress), err
 }
+
+/// =================
+/// Manager Functions
+/// =================
 
 // Get the status of the primary and fallback clients
 func (m *ExecutionClientManager) CheckStatus(ctx context.Context) *apitypes.ClientManagerStatus {
@@ -350,10 +288,6 @@ func (m *ExecutionClientManager) CheckStatus(ctx context.Context) *apitypes.Clie
 	return status
 }
 
-/// ==================
-/// Internal functions
-/// ==================
-
 func getNetworkNameFromId(networkId uint) string {
 	switch networkId {
 	case 1:
@@ -363,7 +297,6 @@ func getNetworkNameFromId(networkId uint) string {
 	default:
 		return "Unknown Network"
 	}
-
 }
 
 // Check the client status
@@ -431,68 +364,4 @@ func checkEcStatus(ctx context.Context, client *ethclient.Client) apitypes.Clien
 	}
 
 	return status
-
-}
-
-// Attempts to run a function progressively through each client until one succeeds or they all fail.
-func (m *ExecutionClientManager) runFunction(ctx context.Context, function ecFunction) (any, error) {
-	// Make a context with the timeout set
-	ctx, cancel := context.WithTimeout(ctx, m.timeout)
-	defer cancel()
-
-	// Check if we can use the primary
-	if m.primaryReady {
-		// Try to run the function on the primary
-		result, err := function(m.primaryEc)
-		if err != nil {
-			if m.isDisconnected(err) {
-				// If it's disconnected, log it and try the fallback
-				m.primaryReady = false
-				if m.fallbackEc != nil {
-					m.logger.Printlnf("WARNING: Primary Execution client disconnected (%s), using fallback...", err.Error())
-					return m.runFunction(ctx, function)
-				} else {
-					m.logger.Printlnf("WARNING: Primary Execution client disconnected (%s) and no fallback is configured.", err.Error())
-					return nil, fmt.Errorf("all Execution clients failed")
-				}
-			}
-
-			// If it's a different error, just return it
-			return nil, err
-		}
-
-		// If there's no error, return the result
-		return result, nil
-	}
-
-	if m.fallbackReady {
-		// Try to run the function on the fallback
-		result, err := function(m.fallbackEc)
-		if err != nil {
-			if m.isDisconnected(err) {
-				// If it's disconnected, log it and try the fallback
-				m.logger.Printlnf("Fallback Execution client request failed (%s)", err.Error())
-				m.fallbackReady = false
-				return nil, fmt.Errorf("all Execution clients failed")
-			}
-
-			// If it's a different error, just return it
-			return nil, err
-		}
-
-		// If there's no error, return the result
-		return result, nil
-	}
-
-	return nil, fmt.Errorf("no Execution clients were ready")
-}
-
-// Returns true if the error was a connection failure and a backup client is available
-func (m *ExecutionClientManager) isDisconnected(err error) bool {
-	var sysErr syscall.Errno
-	if errors.As(err, &sysErr) {
-		return true
-	}
-	var netErr net.Error
-	return errors.As(err, &netErr)
 }

@@ -18,6 +18,16 @@ const (
 	MetricsPortID           string = "metricsPort"
 	CacheSizeID             string = "cacheSize"
 
+	// Logger
+	LoggerLevelID      string = "level"
+	LoggerFormatID     string = "format"
+	LoggerAddSourceID  string = "addSource"
+	LoggerMaxSizeID    string = "maxSize"
+	LoggerMaxBackupsID string = "maxBackups"
+	LoggerMaxAgeID     string = "maxAge"
+	LoggerLocalTimeID  string = "localTime"
+	LoggerCompressID   string = "compress"
+
 	// Besu
 	BesuJvmHeapSizeID   string = "jvmHeapSize"
 	BesuMaxBackLayersID string = "maxBackLayers"

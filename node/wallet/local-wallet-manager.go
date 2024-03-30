@@ -206,7 +206,7 @@ func (m *LocalWalletManager) SignMessage(message []byte) ([]byte, error) {
 	messageHash := accounts.TextHash(message)
 	signedMessage, err := crypto.Sign(messageHash, m.nodePrivateKey)
 	if err != nil {
-		return nil, fmt.Errorf("Error signing message: %w", err)
+		return nil, fmt.Errorf("error signing message: %w", err)
 	}
 
 	// fix the ECDSA 'v' (see https://medium.com/mycrypto/the-magic-of-digital-signatures-on-ethereum-98fe184dc9c7#:~:text=The%20version%20number,2%E2%80%9D%20was%20introduced)

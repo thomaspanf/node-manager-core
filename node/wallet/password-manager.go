@@ -41,7 +41,7 @@ func (m *PasswordManager) GetPasswordFromDisk() (string, bool, error) {
 func (m *PasswordManager) SavePassword(password string) error {
 	err := os.WriteFile(m.path, []byte(password), passwordFileMode)
 	if err != nil {
-		return fmt.Errorf("error savingpassword to [%s]: %w", err)
+		return fmt.Errorf("error saving password to [%s]: %w", m.path, err)
 	}
 	return nil
 }
