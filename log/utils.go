@@ -22,3 +22,11 @@ func ReplaceTime(_ []string, a slog.Attr) slog.Attr {
 	}
 	return a
 }
+
+// Removes the time and level from the message
+func WithoutTimeAndLevel(groups []string, a slog.Attr) slog.Attr {
+	if a.Key == slog.TimeKey || a.Key == slog.LevelKey {
+		return slog.Attr{}
+	}
+	return a
+}
