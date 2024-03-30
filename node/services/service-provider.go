@@ -35,13 +35,12 @@ type ServiceProvider struct {
 	cancel context.CancelFunc
 
 	// Logging
-	debugMode   bool
 	apiLogger   *log.Logger
 	tasksLogger *log.Logger
 }
 
 // Creates a new ServiceProvider instance
-func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMode bool) (*ServiceProvider, error) {
+func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration) (*ServiceProvider, error) {
 	// Make the API logger
 	loggerOpts := cfg.GetLoggerOptions()
 	apiLogger, err := log.NewLogger(cfg.GetApiLogFilePath(), loggerOpts)
@@ -117,7 +116,6 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration, debugMo
 		queryMgr:    queryMgr,
 		ctx:         ctx,
 		cancel:      cancel,
-		debugMode:   debugMode,
 		apiLogger:   apiLogger,
 		tasksLogger: tasksLogger,
 	}
@@ -172,10 +170,6 @@ func (p *ServiceProvider) GetApiLogger() *log.Logger {
 
 func (p *ServiceProvider) GetTasksLogger() *log.Logger {
 	return p.tasksLogger
-}
-
-func (p *ServiceProvider) IsDebugMode() bool {
-	return p.debugMode
 }
 
 func (p *ServiceProvider) GetBaseContext() context.Context {
