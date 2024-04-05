@@ -7,10 +7,10 @@ import (
 
 const (
 	// Tags
-	lighthouseVcTagPortableTest string = "sigp/lighthouse:v5.1.2"
-	lighthouseVcTagPortableProd string = "sigp/lighthouse:v5.1.2"
-	lighthouseVcTagModernTest   string = "sigp/lighthouse:v5.1.2-modern"
-	lighthouseVcTagModernProd   string = "sigp/lighthouse:v5.1.2-modern"
+	lighthouseVcTagPortableTest string = "sigp/lighthouse:v5.1.3"
+	lighthouseVcTagPortableProd string = "sigp/lighthouse:v5.1.3"
+	lighthouseVcTagModernTest   string = "sigp/lighthouse:v5.1.3-modern"
+	lighthouseVcTagModernProd   string = "sigp/lighthouse:v5.1.3-modern"
 )
 
 // Configuration for the Lighthouse VC

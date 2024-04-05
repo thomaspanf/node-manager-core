@@ -100,6 +100,7 @@ const (
 	PrysmRpcUrlID      string = "prysmRpcUrl"
 
 	// Teku
-	TekuJvmHeapSizeID string = "jvmHeapSize"
-	TekuArchiveModeID string = "archiveMode"
+	TekuJvmHeapSizeID           string = "jvmHeapSize"
+	TekuArchiveModeID           string = "archiveMode"
+	TekuUseSlashingProtectionID string = "useSlashingProtection"
 )

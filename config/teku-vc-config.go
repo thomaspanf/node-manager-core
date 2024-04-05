@@ -12,6 +12,9 @@ const (
 
 // Configuration for Teku
 type TekuVcConfig struct {
+	// The use slashing protection flag
+	UseSlashingProtection Parameter[bool]
+
 	// The Docker Hub tag for the Teku VC
 	ContainerTag Parameter[string]
 
@@ -22,6 +25,20 @@ type TekuVcConfig struct {
 // Generates a new Teku VC configuration
 func NewTekuVcConfig() *TekuVcConfig {
 	return &TekuVcConfig{
+		UseSlashingProtection: Parameter[bool]{
+			ParameterCommon: &ParameterCommon{
+				ID:                 ids.TekuUseSlashingProtectionID,
+				Name:               "Use Validator Slashing Protection",
+				Description:        "When enabled, Teku will use the Validator Slashing Protection feature. See https://docs.teku.consensys.io/how-to/prevent-slashing/detect-slashing for details.",
+				AffectsContainers:  []ContainerID{ContainerID_BeaconNode, ContainerID_ValidatorClient},
+				CanBeBlank:         false,
+				OverwriteOnUpgrade: false,
+			},
+			Default: map[Network]bool{
+				Network_All: true,
+			},
+		},
+
 		ContainerTag: Parameter[string]{
 			ParameterCommon: &ParameterCommon{
 				ID:                 ids.ContainerTagID,
@@ -61,6 +78,7 @@ func (cfg *TekuVcConfig) GetTitle() string {
 // Get the parameters for this config
 func (cfg *TekuVcConfig) GetParameters() []IParameter {
 	return []IParameter{
+		&cfg.UseSlashingProtection,
 		&cfg.ContainerTag,
 		&cfg.AdditionalFlags,
 	}

@@ -9,8 +9,8 @@ import (
 
 // Constants
 const (
-	rethTagProd string = "ghcr.io/paradigmxyz/reth:v0.2.0-beta.3"
-	rethTagTest string = "ghcr.io/paradigmxyz/reth:v0.2.0-beta.3"
+	rethTagProd string = "ghcr.io/paradigmxyz/reth:v0.2.0-beta.5"
+	rethTagTest string = "ghcr.io/paradigmxyz/reth:v0.2.0-beta.5"
 )
 
 // Configuration for Reth
@@ -49,7 +49,7 @@ func NewRethConfig() *RethConfig {
 			ParameterCommon: &ParameterCommon{
 				ID:                 ids.MaxPeersID,
 				Name:               "Max Peers",
-				Description:        "The maximum number of peers Reth should connect to. This can be lowered to improve performance on low-power systems or constrained Networks. We recommend keeping it at 12 or higher.",
+				Description:        "The maximum number of peers Reth should connect to. This can be lowered to improve performance on low-power systems or constrained networks. We recommend keeping it at 12 or higher.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
 				CanBeBlank:         false,
 				OverwriteOnUpgrade: false,
