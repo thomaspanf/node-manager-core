@@ -24,6 +24,9 @@ func NewLogger(logFilePath string, options LoggerOptions) (*Logger, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error creating API log directory for [%s]: %w", logFilePath, err)
 	}
+	handle, _ := os.OpenFile(logFilePath, os.O_CREATE|os.O_RDWR, logFileMode)
+	handle.Close()
+
 	logFile := &lumberjack.Logger{
 		Filename:   logFilePath,
 		MaxSize:    options.MaxSize,
