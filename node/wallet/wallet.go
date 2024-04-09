@@ -52,28 +52,8 @@ func NewWallet(logger *slog.Logger, walletDataPath string, walletAddressPath str
 		walletDataPath: walletDataPath,
 	}
 
-	// Load the password
-	password, isPasswordSaved, err := w.passwordManager.GetPasswordFromDisk()
-	if err != nil {
-		return nil, fmt.Errorf("error loading password: %w", err)
-	}
-
 	// Load the wallet
-	if isPasswordSaved {
-		walletMgr, err := w.loadWalletData(password)
-		if err != nil && logger != nil {
-			logger.Warn("[WALLET] Loading wallet with stored node password failed", log.Err(err))
-		} else if walletMgr != nil {
-			w.walletManager = walletMgr
-		}
-	}
-
-	// Load the node address
-	_, _, err = w.addressManager.LoadAddress()
-	if err != nil {
-		return nil, fmt.Errorf("error loading node address: %w", err)
-	}
-	return w, nil
+	return w, w.Reload(logger)
 }
 
 // Gets the status of the wallet and its artifacts
@@ -107,6 +87,32 @@ func (w *Wallet) GetStatus() (wallet.WalletStatus, error) {
 	// Get the address details
 	status.Address.NodeAddress, status.Address.HasAddress = w.addressManager.GetAddress()
 	return status, nil
+}
+
+// Reloads the wallet artifacts from disk
+func (w *Wallet) Reload(logger *slog.Logger) error {
+	// Load the password
+	password, isPasswordSaved, err := w.passwordManager.GetPasswordFromDisk()
+	if err != nil {
+		return fmt.Errorf("error loading password: %w", err)
+	}
+
+	// Load the wallet
+	if isPasswordSaved {
+		walletMgr, err := w.loadWalletData(password)
+		if err != nil && logger != nil {
+			logger.Warn("Loading wallet with stored node password failed", slog.String(log.PathKey, w.walletDataPath), log.Err(err))
+		} else if walletMgr != nil {
+			w.walletManager = walletMgr
+		}
+	}
+
+	// Load the node address
+	_, _, err = w.addressManager.LoadAddress()
+	if err != nil {
+		return fmt.Errorf("error loading node address: %w", err)
+	}
+	return nil
 }
 
 // Get the node address, if one is loaded
