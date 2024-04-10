@@ -120,6 +120,12 @@ func HandleResponse[DataType any](context *RequesterContext, resp *http.Response
 		return nil, fmt.Errorf("error reading the response body for %s: %w", path, err)
 	}
 
+	// Handle 404s specially since they won't have a JSON body
+	if resp.StatusCode == http.StatusNotFound {
+		context.logger.Debug("API Response (raw)", slog.String(log.CodeKey, resp.Status), slog.String(log.BodyKey, string(bytes)))
+		return nil, fmt.Errorf("route '%s' not found", path)
+	}
+
 	// Deserialize the response into the provided type
 	var parsedResponse types.ApiResponse[DataType]
 	err = json.Unmarshal(bytes, &parsedResponse)
