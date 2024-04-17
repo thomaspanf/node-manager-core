@@ -920,7 +920,9 @@ func (c *StandardHttpClient) getRequestReader(ctx context.Context, requestPath s
 	// Submit the request
 	response, err := c.client.Do(req)
 	if err != nil {
-		return nil, 0, fmt.Errorf("error running GET request to [%s]: %w", path, err)
+		// Remove the query for readability
+		trimmedPath, _, _ := strings.Cut(path, "?")
+		return nil, 0, fmt.Errorf("error running GET request to [%s]: %w", trimmedPath, err)
 	}
 	return response.Body, response.StatusCode, nil
 }
