@@ -15,6 +15,16 @@ import (
 	eth2ks "github.com/wealdtech/go-eth2-wallet-encryptor-keystorev4"
 )
 
+// Prysm's keystore format
+type PrysmKeystore struct {
+	Crypto  map[string]any `json:"crypto"`
+	Name    string         `json:"name,omitempty"` // Technically not part of the spec but Prysm needs it
+	Version uint           `json:"version"`
+	UUID    uuid.UUID      `json:"uuid"`
+	Path    string         `json:"path"`
+	Pubkey  string         `json:"pubkey"` // This has to support being blank for backwards compatibility
+}
+
 // Prysm keystore manager
 type PrysmKeystoreManager struct {
 	as                       *prysmAccountStore
@@ -94,7 +104,7 @@ func (ks *PrysmKeystoreManager) StoreValidatorKey(key *eth2types.BLSPrivateKey, 
 	}
 
 	// Create new keystore
-	keystore := beacon.ValidatorKeystore{
+	keystore := PrysmKeystore{
 		Crypto:  asEncrypted,
 		Name:    ks.encryptor.Name(),
 		Version: ks.encryptor.Version(),
@@ -188,8 +198,8 @@ func (ks *PrysmKeystoreManager) initialize() error {
 	}
 
 	// Decode keystore
-	keystore := &beacon.ValidatorKeystore{}
-	if err = json.Unmarshal(ksBytes, keystore); err != nil {
+	var keystore PrysmKeystore
+	if err = json.Unmarshal(ksBytes, &keystore); err != nil {
 		return fmt.Errorf("error decoding validator keystore: %w", err)
 	}
 
