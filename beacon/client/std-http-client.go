@@ -674,12 +674,7 @@ func (c *StandardHttpClient) getValidators(ctx context.Context, stateId string, 
 	if len(pubkeys) > 0 {
 		query = fmt.Sprintf("?id=%s", strings.Join(pubkeys, ","))
 	}
-	// TEMP: create a context without a deadline for this particular request because it can take a very, very long time to return
-	var cancel context.CancelFunc
-	ctx, cancel = context.WithTimeout(ctx, time.Hour*24)
-	defer cancel()
-
-	responseBody, status, err := c.getRequest(ctx, fmt.Sprintf(RequestValidatorsPath, stateId)+query)
+	responseBody, status, err := c.getRequestWithoutTimeout(ctx, fmt.Sprintf(RequestValidatorsPath, stateId)+query)
 	if err != nil {
 		return ValidatorsResponse{}, fmt.Errorf("error getting validators: %w", err)
 	}
@@ -870,7 +865,8 @@ func (c *StandardHttpClient) getCommittees(ctx context.Context, stateId string, 
 	}
 
 	// Committees responses are large, so let the json decoder read it in a buffered fashion
-	reader, status, err := c.getRequestReader(ctx, fmt.Sprintf(RequestCommitteePath, stateId)+query)
+	clientWithoutTimeout := http.Client{}
+	reader, status, err := getRequestReader(ctx, fmt.Sprintf(RequestCommitteePath, stateId)+query, c.providerAddress, clientWithoutTimeout)
 	if err != nil {
 		return CommitteesResponse{}, fmt.Errorf("error getting committees: %w", err)
 	}
@@ -912,31 +908,21 @@ func (c *StandardHttpClient) postWithdrawalCredentialsChange(ctx context.Context
 	return nil
 }
 
-// Make a GET request but do not read its body yet (allows buffered decoding)
-func (c *StandardHttpClient) getRequestReader(ctx context.Context, requestPath string) (io.ReadCloser, int, error) {
-	// Make the request
-	path := fmt.Sprintf(RequestUrlFormat, c.providerAddress, requestPath)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path, nil)
-	if err != nil {
-		return nil, 0, fmt.Errorf("error creating GET request to [%s]: %w", path, err)
-	}
-	req.Header.Set("Content-Type", RequestContentType)
-
-	// Submit the request
-	response, err := c.client.Do(req)
-	if err != nil {
-		// Remove the query for readability
-		trimmedPath, _, _ := strings.Cut(path, "?")
-		return nil, 0, fmt.Errorf("error running GET request to [%s]: %w", trimmedPath, err)
-	}
-	return response.Body, response.StatusCode, nil
+// Make a GET request to the beacon node and read the body of the response
+func (c *StandardHttpClient) getRequest(ctx context.Context, requestPath string) ([]byte, int, error) {
+	return getRequestImpl(ctx, requestPath, c.providerAddress, c.client)
 }
 
 // Make a GET request to the beacon node and read the body of the response
-func (c *StandardHttpClient) getRequest(ctx context.Context, requestPath string) ([]byte, int, error) {
+func (c *StandardHttpClient) getRequestWithoutTimeout(ctx context.Context, requestPath string) ([]byte, int, error) {
+	clientWithoutTimeout := http.Client{}
+	return getRequestImpl(ctx, requestPath, c.providerAddress, clientWithoutTimeout)
+}
 
+// Make a GET request to the beacon node and read the body of the response
+func getRequestImpl(ctx context.Context, requestPath string, providerAddress string, client http.Client) ([]byte, int, error) {
 	// Send request
-	reader, status, err := c.getRequestReader(ctx, requestPath)
+	reader, status, err := getRequestReader(ctx, requestPath, providerAddress, client)
 	if err != nil {
 		return []byte{}, 0, err
 	}
@@ -993,4 +979,24 @@ func (c *StandardHttpClient) postRequest(ctx context.Context, requestPath string
 // Get an eth2 epoch number by time
 func epochAt(config beacon.Eth2Config, time uint64) uint64 {
 	return config.GenesisEpoch + (time-config.GenesisTime)/config.SecondsPerEpoch
+}
+
+// Make a GET request but do not read its body yet (allows buffered decoding)
+func getRequestReader(ctx context.Context, requestPath string, providerAddress string, client http.Client) (io.ReadCloser, int, error) {
+	// Make the request
+	path := fmt.Sprintf(RequestUrlFormat, providerAddress, requestPath)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path, nil)
+	if err != nil {
+		return nil, 0, fmt.Errorf("error creating GET request to [%s]: %w", path, err)
+	}
+	req.Header.Set("Content-Type", RequestContentType)
+
+	// Submit the request
+	response, err := client.Do(req)
+	if err != nil {
+		// Remove the query for readability
+		trimmedPath, _, _ := strings.Cut(path, "?")
+		return nil, 0, fmt.Errorf("error running GET request to [%s]: %w", trimmedPath, err)
+	}
+	return response.Body, response.StatusCode, nil
 }
