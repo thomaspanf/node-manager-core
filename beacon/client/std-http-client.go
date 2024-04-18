@@ -674,6 +674,11 @@ func (c *StandardHttpClient) getValidators(ctx context.Context, stateId string, 
 	if len(pubkeys) > 0 {
 		query = fmt.Sprintf("?id=%s", strings.Join(pubkeys, ","))
 	}
+	// TEMP: create a context without a deadline for this particular request because it can take a very, very long time to return
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithTimeout(ctx, time.Hour*24)
+	defer cancel()
+
 	responseBody, status, err := c.getRequest(ctx, fmt.Sprintf(RequestValidatorsPath, stateId)+query)
 	if err != nil {
 		return ValidatorsResponse{}, fmt.Errorf("error getting validators: %w", err)
