@@ -8,13 +8,14 @@ import (
 	prdeposit "github.com/prysmaticlabs/prysm/v5/contracts/deposit"
 	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"github.com/rocket-pool/node-manager-core/beacon"
+	"github.com/rocket-pool/node-manager-core/beacon/ssz_types"
 	eth2types "github.com/wealdtech/go-eth2-types/v2"
 )
 
 // Get deposit data & root for a given validator key and withdrawal credentials
 func GetDepositData(validatorKey *eth2types.BLSPrivateKey, withdrawalCredentials common.Hash, genesisForkVersion []byte, depositAmount uint64, networkName string) (beacon.ExtendedDepositData, error) {
 	// Build deposit data
-	dd := beacon.DepositDataNoSignature{
+	dd := ssz_types.DepositDataNoSignature{
 		PublicKey:             validatorKey.PublicKey().Marshal(),
 		WithdrawalCredentials: withdrawalCredentials[:],
 		Amount:                depositAmount,
@@ -29,7 +30,7 @@ func GetDepositData(validatorKey *eth2types.BLSPrivateKey, withdrawalCredentials
 	if err != nil {
 		return beacon.ExtendedDepositData{}, fmt.Errorf("error getting message root: %w", err)
 	}
-	dataRoot := beacon.SigningRoot{
+	dataRoot := ssz_types.SigningRoot{
 		ObjectRoot: messageRoot[:],
 		Domain:     domain,
 	}
@@ -41,7 +42,7 @@ func GetDepositData(validatorKey *eth2types.BLSPrivateKey, withdrawalCredentials
 	}
 
 	// Build deposit data struct (with signature)
-	var depositData = beacon.DepositData{
+	var depositData = ssz_types.DepositData{
 		PublicKey:             dd.PublicKey,
 		WithdrawalCredentials: dd.WithdrawalCredentials,
 		Amount:                dd.Amount,

@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/rocket-pool/node-manager-core/beacon"
+	"github.com/rocket-pool/node-manager-core/beacon/ssz_types"
 	eth2types "github.com/wealdtech/go-eth2-types/v2"
 )
 
@@ -16,7 +17,7 @@ func GetSignedExitMessage(validatorKey *eth2types.BLSPrivateKey, validatorIndex 
 		return beacon.ValidatorSignature{}, fmt.Errorf("error parsing validator index (%s): %w", validatorIndex, err)
 	}
 	// Build voluntary exit message
-	exitMessage := beacon.VoluntaryExit{
+	exitMessage := ssz_types.VoluntaryExit{
 		Epoch:          epoch,
 		ValidatorIndex: indexNum,
 	}
@@ -26,7 +27,7 @@ func GetSignedExitMessage(validatorKey *eth2types.BLSPrivateKey, validatorIndex 
 		return beacon.ValidatorSignature{}, err
 	}
 	// Get signing root
-	sr := beacon.SigningRoot{
+	sr := ssz_types.SigningRoot{
 		ObjectRoot: or[:],
 		Domain:     signatureDomain,
 	}
