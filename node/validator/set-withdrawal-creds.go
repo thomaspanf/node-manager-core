@@ -7,6 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rocket-pool/node-manager-core/beacon"
+	"github.com/rocket-pool/node-manager-core/beacon/ssz_types"
 	eth2types "github.com/wealdtech/go-eth2-types/v2"
 )
 
@@ -35,7 +36,7 @@ func GetSignedWithdrawalCredsChangeMessage(withdrawalKey *eth2types.BLSPrivateKe
 	}
 
 	// Build withdrawal creds change message
-	message := beacon.WithdrawalCredentialsChange{
+	message := ssz_types.WithdrawalCredentialsChange{
 		ValidatorIndex:     indexNum,
 		FromBLSPubkey:      withdrawalPubkeyBuffer,
 		ToExecutionAddress: newWithdrawalAddress,
@@ -48,7 +49,7 @@ func GetSignedWithdrawalCredsChangeMessage(withdrawalKey *eth2types.BLSPrivateKe
 	}
 
 	// Get signing root
-	sr := beacon.SigningRoot{
+	sr := ssz_types.SigningRoot{
 		ObjectRoot: or[:],
 		Domain:     signatureDomain,
 	}
