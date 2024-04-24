@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	lodestarBnTagTest string = "chainsafe/lodestar:v1.17.0"
-	lodestarBnTagProd string = "chainsafe/lodestar:v1.17.0"
+	lodestarBnTagTest string = "chainsafe/lodestar:v1.18.0"
+	lodestarBnTagProd string = "chainsafe/lodestar:v1.18.0"
 )
 
 // Configuration for the Lodestar BN
@@ -34,7 +34,7 @@ func NewLodestarBnConfig() *LodestarBnConfig {
 				OverwriteOnUpgrade: false,
 			},
 			Default: map[Network]uint16{
-				Network_All: 50,
+				Network_All: 100,
 			},
 		},
 
