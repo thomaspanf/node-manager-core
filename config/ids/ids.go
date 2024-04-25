@@ -51,6 +51,7 @@ const (
 
 	// Geth
 	GethEnablePbssID string = "enablePbss"
+	GethEvmTimeoutID string = "evmTimeout"
 
 	// Lighthouse
 	LighthouseQuicPortID string = "p2pQuicPort"
