@@ -14,21 +14,21 @@ const (
 )
 
 // Simple class to wrap the node's address file
-type AddressManager struct {
+type addressManager struct {
 	path     string
 	address  common.Address
 	isLoaded bool
 }
 
 // Creates a new address manager
-func NewAddressManager(path string) *AddressManager {
-	return &AddressManager{
+func newAddressManager(path string) *addressManager {
+	return &addressManager{
 		path: path,
 	}
 }
 
 // Gets the address saved on disk. Returns false if the address file doesn't exist.
-func (m *AddressManager) LoadAddress() (common.Address, bool, error) {
+func (m *addressManager) LoadAddress() (common.Address, bool, error) {
 	_, err := os.Stat(m.path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return common.Address{}, false, nil
@@ -46,18 +46,18 @@ func (m *AddressManager) LoadAddress() (common.Address, bool, error) {
 }
 
 // Get the cached address
-func (m *AddressManager) GetAddress() (common.Address, bool) {
+func (m *addressManager) GetAddress() (common.Address, bool) {
 	return m.address, m.isLoaded
 }
 
 // Sets the node address without saving it to disk
-func (m *AddressManager) SetAddress(newAddress common.Address) {
+func (m *addressManager) SetAddress(newAddress common.Address) {
 	m.address = newAddress
 	m.isLoaded = true
 }
 
 // Sets the node address and saves it to disk
-func (m *AddressManager) SetAndSaveAddress(newAddress common.Address) error {
+func (m *addressManager) SetAndSaveAddress(newAddress common.Address) error {
 	m.address = newAddress
 	m.isLoaded = true
 	bytes := []byte(newAddress.Hex())

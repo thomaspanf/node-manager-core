@@ -5,6 +5,12 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	DefaultNodeKeyPath       = "m/44'/60'/0'/0/%d"
+	LedgerLiveNodeKeyPath    = "m/44'/60'/%d/0/0"
+	MyEtherWalletNodeKeyPath = "m/44'/60'/0'/%d"
+)
+
 type WalletStatus struct {
 	Address struct {
 		NodeAddress common.Address `json:"nodeAddress"`
