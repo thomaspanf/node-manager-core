@@ -16,9 +16,6 @@ const (
 
 // Configuration for Geth
 type GethConfig struct {
-	// The flag for enabling PBSS
-	EnablePbss Parameter[bool]
-
 	// Max number of P2P peers to connect to
 	MaxPeers Parameter[uint16]
 
@@ -35,20 +32,6 @@ type GethConfig struct {
 // Generates a new Geth configuration
 func NewGethConfig() *GethConfig {
 	return &GethConfig{
-		EnablePbss: Parameter[bool]{
-			ParameterCommon: &ParameterCommon{
-				ID:                 ids.GethEnablePbssID,
-				Name:               "Enable PBSS",
-				Description:        "Enable Geth's new path-based state scheme. With this enabled, you will no longer need to manually prune Geth; it will automatically prune its database in real-time.\n\n[orange]NOTE:\nEnabling this will require you to remove and resync your Geth DB.\nYou will need a synced fallback node configured before doing this, or you will no longer be able to attest until it has finished resyncing!",
-				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
-				CanBeBlank:         false,
-				OverwriteOnUpgrade: false,
-			},
-			Default: map[Network]bool{
-				Network_All: true,
-			},
-		},
-
 		MaxPeers: Parameter[uint16]{
 			ParameterCommon: &ParameterCommon{
 				ID:                 ids.MaxPeersID,
@@ -112,7 +95,6 @@ func (cfg *GethConfig) GetTitle() string {
 // Get the parameters for this config
 func (cfg *GethConfig) GetParameters() []IParameter {
 	return []IParameter{
-		&cfg.EnablePbss,
 		&cfg.MaxPeers,
 		&cfg.EvmTimeout,
 		&cfg.ContainerTag,

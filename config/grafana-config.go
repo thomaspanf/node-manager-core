@@ -7,7 +7,7 @@ import (
 // Constants
 const (
 	// Tags
-	grafanaTag string = "grafana/grafana:9.5.17"
+	grafanaTag string = "grafana/grafana:9.5.18"
 )
 
 // Configuration for Grafana
