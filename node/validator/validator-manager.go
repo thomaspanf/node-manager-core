@@ -3,6 +3,7 @@ package validator
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/rocket-pool/node-manager-core/beacon"
 	"github.com/rocket-pool/node-manager-core/node/validator/keystore"
@@ -11,6 +12,7 @@ import (
 
 type ValidatorManager struct {
 	keystoreManagers map[string]keystore.IKeystoreManager
+	lock             *sync.Mutex
 }
 
 func NewValidatorManager(validatorPath string) *ValidatorManager {
@@ -22,12 +24,16 @@ func NewValidatorManager(validatorPath string) *ValidatorManager {
 			"prysm":      keystore.NewPrysmKeystoreManager(validatorPath),
 			"teku":       keystore.NewTekuKeystoreManager(validatorPath),
 		},
+		lock: &sync.Mutex{},
 	}
 	return mgr
 }
 
 // Stores a validator key into all of the manager's client keystores
 func (m *ValidatorManager) StoreKey(key *types.BLSPrivateKey, derivationPath string) error {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
 	for name, mgr := range m.keystoreManagers {
 		err := mgr.StoreValidatorKey(key, derivationPath)
 		if err != nil {
@@ -40,6 +46,8 @@ func (m *ValidatorManager) StoreKey(key *types.BLSPrivateKey, derivationPath str
 
 // Loads a validator key from the manager's client keystores
 func (m *ValidatorManager) LoadKey(pubkey beacon.ValidatorPubkey) (*types.BLSPrivateKey, error) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
 
 	errors := []string{}
 	// Try loading the key from all of the keystores, caching errors but not breaking on them
