@@ -28,7 +28,7 @@ import (
 // Simple class to wrap a node's local wallet keystore.
 // Note that this does *not* manage the wallet data file on disk, though it does manage the
 // legacy keystore used by some integrations.
-type LocalWalletManager struct {
+type localWalletManager struct {
 	// The ID of the execution layer chain currently being used
 	chainID *big.Int
 
@@ -50,20 +50,20 @@ type LocalWalletManager struct {
 }
 
 // Creates a new wallet manager for local wallets
-func NewLocalWalletManager(chainID uint) *LocalWalletManager {
-	return &LocalWalletManager{
+func newLocalWalletManager(chainID uint) *localWalletManager {
+	return &localWalletManager{
 		chainID:   big.NewInt(int64(chainID)),
 		encryptor: eth2ks.New(),
 	}
 }
 
 // Get the type of this wallet manager
-func (m *LocalWalletManager) GetType() wallet.WalletType {
+func (m *localWalletManager) GetType() wallet.WalletType {
 	return wallet.WalletType_Local
 }
 
 // Get the pubkey of the loaded node wallet, or false if one isn't loaded yet
-func (m *LocalWalletManager) GetAddress() (common.Address, error) {
+func (m *localWalletManager) GetAddress() (common.Address, error) {
 	if m.nodePrivateKey == nil {
 		return common.Address{}, fmt.Errorf("wallet is not initialized")
 	}
@@ -71,12 +71,12 @@ func (m *LocalWalletManager) GetAddress() (common.Address, error) {
 }
 
 // Get the private key if it's been loaded
-func (m *LocalWalletManager) GetPrivateKey() *ecdsa.PrivateKey {
+func (m *localWalletManager) GetPrivateKey() *ecdsa.PrivateKey {
 	return m.nodePrivateKey
 }
 
 // Get the legacy keystore in Geth format
-func (m *LocalWalletManager) GetEthKeystore(password string) ([]byte, error) {
+func (m *localWalletManager) GetEthKeystore(password string) ([]byte, error) {
 	if m.nodePrivateKey == nil {
 		return nil, fmt.Errorf("wallet is not initialized")
 	}
@@ -97,7 +97,7 @@ func (m *LocalWalletManager) GetEthKeystore(password string) ([]byte, error) {
 }
 
 // Get the transactor for the wallet
-func (m *LocalWalletManager) GetTransactor() (*bind.TransactOpts, error) {
+func (m *localWalletManager) GetTransactor() (*bind.TransactOpts, error) {
 	if m.transactor == nil {
 		return nil, fmt.Errorf("wallet is not initialized")
 	}
@@ -105,7 +105,7 @@ func (m *LocalWalletManager) GetTransactor() (*bind.TransactOpts, error) {
 }
 
 // Initialize a new keystore from a mnemonic and derivation info, derive the corresponding key, and load it all up
-func (m *LocalWalletManager) InitializeKeystore(derivationPath string, walletIndex uint, mnemonic string, password string) (*wallet.LocalWalletData, error) {
+func (m *localWalletManager) InitializeKeystore(derivationPath string, walletIndex uint, mnemonic string, password string) (*wallet.LocalWalletData, error) {
 	// Generate the seed from the mnemonic
 	seed := bip39.NewSeed(mnemonic, "")
 
@@ -135,13 +135,13 @@ func (m *LocalWalletManager) InitializeKeystore(derivationPath string, walletInd
 }
 
 // Verifies that the provided password is correct for this wallet's keystore
-func (m *LocalWalletManager) VerifyPassword(password string) (bool, error) {
+func (m *localWalletManager) VerifyPassword(password string) (bool, error) {
 	if m.data == nil {
 		return false, fmt.Errorf("wallet is not initialized")
 	}
 
 	// Make a new local manager and load the data with the candidate password
-	candidateMgr := NewLocalWalletManager(0)
+	candidateMgr := newLocalWalletManager(0)
 	err := candidateMgr.LoadWallet(m.data, password)
 	if err != nil {
 		return false, fmt.Errorf("error verifying wallet with candidate password: %w", err)
@@ -153,7 +153,7 @@ func (m *LocalWalletManager) VerifyPassword(password string) (bool, error) {
 }
 
 // Load the node wallet's private key from the keystore
-func (m *LocalWalletManager) LoadWallet(data *wallet.LocalWalletData, password string) error {
+func (m *localWalletManager) LoadWallet(data *wallet.LocalWalletData, password string) error {
 	// Decrypt the seed
 	var err error
 	seed, err := m.encryptor.Decrypt(data.Crypto, password)
@@ -169,7 +169,7 @@ func (m *LocalWalletManager) LoadWallet(data *wallet.LocalWalletData, password s
 
 	// Handle an empty derivation path
 	if data.DerivationPath == "" {
-		data.DerivationPath = DefaultNodeKeyPath
+		data.DerivationPath = wallet.DefaultNodeKeyPath
 	}
 
 	// Get the derived key
@@ -202,7 +202,7 @@ func (m *LocalWalletManager) LoadWallet(data *wallet.LocalWalletData, password s
 }
 
 // Signs a message with the node wallet's private key
-func (m *LocalWalletManager) SignMessage(message []byte) ([]byte, error) {
+func (m *localWalletManager) SignMessage(message []byte) ([]byte, error) {
 	messageHash := accounts.TextHash(message)
 	signedMessage, err := crypto.Sign(messageHash, m.nodePrivateKey)
 	if err != nil {
@@ -215,7 +215,7 @@ func (m *LocalWalletManager) SignMessage(message []byte) ([]byte, error) {
 }
 
 // Signs a transaction with the node wallet's private key
-func (m *LocalWalletManager) SignTransaction(serializedTx []byte) ([]byte, error) {
+func (m *localWalletManager) SignTransaction(serializedTx []byte) ([]byte, error) {
 	tx := types.Transaction{}
 	err := tx.UnmarshalBinary(serializedTx)
 	if err != nil {
@@ -237,7 +237,7 @@ func (m *LocalWalletManager) SignTransaction(serializedTx []byte) ([]byte, error
 }
 
 // Serialize the wallet data as JSON
-func (m *LocalWalletManager) SerializeData() (string, error) {
+func (m *localWalletManager) SerializeData() (string, error) {
 	if m.data == nil {
 		return "", fmt.Errorf("wallet is not initialized")
 	}
@@ -250,7 +250,7 @@ func (m *LocalWalletManager) SerializeData() (string, error) {
 }
 
 // Generate the validator key with the provided path, using the wallet's seed as the root
-func (m *LocalWalletManager) GenerateValidatorKey(path string) ([]byte, error) {
+func (m *localWalletManager) GenerateValidatorKey(path string) ([]byte, error) {
 	if len(m.seed) == 0 {
 		return nil, fmt.Errorf("wallet is not initialized")
 	}

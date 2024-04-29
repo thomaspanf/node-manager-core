@@ -6,8 +6,8 @@ import (
 
 const (
 	// Tags
-	tekuVcTagTest string = "consensys/teku:24.3.1"
-	tekuVcTagProd string = "consensys/teku:24.3.1"
+	tekuVcTagTest string = tekuBnTagTest
+	tekuVcTagProd string = tekuBnTagProd
 )
 
 // Configuration for Teku

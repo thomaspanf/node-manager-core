@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"math/big"
 	"os"
+	"sync"
 
 	"github.com/goccy/go-json"
 	"github.com/rocket-pool/node-manager-core/log"
@@ -20,23 +21,23 @@ import (
 
 // Config
 const (
-	EntropyBits              = 256
-	FileMode                 = 0600
-	DefaultNodeKeyPath       = "m/44'/60'/0'/0/%d"
-	LedgerLiveNodeKeyPath    = "m/44'/60'/%d/0/0"
-	MyEtherWalletNodeKeyPath = "m/44'/60'/0'/%d"
+	EntropyBits = 256
+	FileMode    = 0600
 )
 
 // Wallet
 type Wallet struct {
 	// Managers
 	walletManager   IWalletManager
-	addressManager  *AddressManager
-	passwordManager *PasswordManager
+	addressManager  *addressManager
+	passwordManager *passwordManager
 
 	// Misc cache
 	chainID        uint
 	walletDataPath string
+
+	// Sync
+	lock *sync.Mutex
 }
 
 // Create new wallet
@@ -44,12 +45,13 @@ func NewWallet(logger *slog.Logger, walletDataPath string, walletAddressPath str
 	// Create the wallet
 	w := &Wallet{
 		// Create managers
-		addressManager:  NewAddressManager(walletAddressPath),
-		passwordManager: NewPasswordManager(passwordFilePath),
+		addressManager:  newAddressManager(walletAddressPath),
+		passwordManager: newPasswordManager(passwordFilePath),
 
 		// Initialize other fields
 		chainID:        chainID,
 		walletDataPath: walletDataPath,
+		lock:           &sync.Mutex{},
 	}
 
 	// Load the wallet
@@ -58,6 +60,9 @@ func NewWallet(logger *slog.Logger, walletDataPath string, walletAddressPath str
 
 // Gets the status of the wallet and its artifacts
 func (w *Wallet) GetStatus() (wallet.WalletStatus, error) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	// Make a status wrapper
 	status := wallet.WalletStatus{}
 
@@ -91,6 +96,9 @@ func (w *Wallet) GetStatus() (wallet.WalletStatus, error) {
 
 // Reloads the wallet artifacts from disk
 func (w *Wallet) Reload(logger *slog.Logger) error {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	// Load the password
 	password, isPasswordSaved, err := w.passwordManager.GetPasswordFromDisk()
 	if err != nil {
@@ -117,11 +125,17 @@ func (w *Wallet) Reload(logger *slog.Logger) error {
 
 // Get the node address, if one is loaded
 func (w *Wallet) GetAddress() (common.Address, bool) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	return w.addressManager.GetAddress()
 }
 
 // Get the transactor that can sign transactions
 func (w *Wallet) GetTransactor() (*bind.TransactOpts, error) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	if w.walletManager == nil {
 		return nil, fmt.Errorf("wallet is not loaded")
 	}
@@ -160,6 +174,9 @@ func (w *Wallet) GetTransactor() (*bind.TransactOpts, error) {
 
 // Sign a message with the wallet's private key
 func (w *Wallet) SignMessage(message []byte) ([]byte, error) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	if w.walletManager == nil {
 		return nil, fmt.Errorf("wallet is not loaded")
 	}
@@ -168,19 +185,28 @@ func (w *Wallet) SignMessage(message []byte) ([]byte, error) {
 
 // Sign a transaction with the wallet's private key
 func (w *Wallet) SignTransaction(serializedTx []byte) ([]byte, error) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	if w.walletManager == nil {
 		return nil, fmt.Errorf("wallet is not loaded")
 	}
 	return w.walletManager.SignTransaction(serializedTx)
 }
 
-// Masquerade as another node address, running all node functions as that address (in read only moe)
+// Masquerade as another node address, running all node functions as that address (in read only mode)
 func (w *Wallet) MasqueradeAsAddress(newAddress common.Address) error {
-	return w.addressManager.SetAndSaveAddress(newAddress)
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
+	return w.masqueradeImpl(newAddress)
 }
 
 // End masquerading as another node address, and use the wallet's address (returning to read/write mode)
 func (w *Wallet) RestoreAddressToWallet() error {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	if w.addressManager == nil {
 		return fmt.Errorf("wallet is not loaded")
 	}
@@ -190,11 +216,14 @@ func (w *Wallet) RestoreAddressToWallet() error {
 		return fmt.Errorf("error getting wallet address: %w", err)
 	}
 
-	return w.MasqueradeAsAddress(walletAddress)
+	return w.masqueradeImpl(walletAddress)
 }
 
 // Initialize the wallet from a random seed
 func (w *Wallet) CreateNewLocalWallet(derivationPath string, walletIndex uint, password string, savePassword bool) (string, error) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	if w.walletManager != nil {
 		return "", fmt.Errorf("wallet keystore is already present - please delete it before creating a new wallet")
 	}
@@ -215,6 +244,9 @@ func (w *Wallet) CreateNewLocalWallet(derivationPath string, walletIndex uint, p
 
 // Recover a local wallet from a mnemonic
 func (w *Wallet) Recover(derivationPath string, walletIndex uint, mnemonic string, password string, savePassword bool, testMode bool) error {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	if w.walletManager != nil {
 		return fmt.Errorf("wallet keystore is already present - please delete it before recovering an existing wallet")
 	}
@@ -229,6 +261,9 @@ func (w *Wallet) Recover(derivationPath string, walletIndex uint, mnemonic strin
 
 // Attempts to load the wallet keystore with the provided password if not set
 func (w *Wallet) SetPassword(password string, save bool) error {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	if w.walletManager != nil {
 		if !save {
 			return fmt.Errorf("wallet is already loaded, nothing to do")
@@ -237,7 +272,7 @@ func (w *Wallet) SetPassword(password string, save bool) error {
 		switch w.walletManager.GetType() {
 		case wallet.WalletType_Local:
 			// Make sure the password is correct
-			localMgr := w.walletManager.(*LocalWalletManager)
+			localMgr := w.walletManager.(*localWalletManager)
 			isValid, err := localMgr.VerifyPassword(password)
 			if err != nil {
 				return fmt.Errorf("error setting password: %w", err)
@@ -281,11 +316,17 @@ func (w *Wallet) SetPassword(password string, save bool) error {
 
 // Retrieves the wallet's password
 func (w *Wallet) GetPassword() (string, bool, error) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	return w.passwordManager.GetPasswordFromDisk()
 }
 
 // Delete the wallet password from disk, but retain it in memory if a local keystore is already loaded
 func (w *Wallet) DeletePassword() error {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	err := w.passwordManager.DeletePassword()
 	if err != nil {
 		return fmt.Errorf("error deleting wallet password: %w", err)
@@ -295,13 +336,16 @@ func (w *Wallet) DeletePassword() error {
 
 // Get the node account private key bytes
 func (w *Wallet) GetNodePrivateKeyBytes() ([]byte, error) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	if w.walletManager == nil {
 		return nil, fmt.Errorf("wallet is not loaded")
 	}
 
 	switch w.walletManager.GetType() {
 	case wallet.WalletType_Local:
-		localMgr := w.walletManager.(*LocalWalletManager)
+		localMgr := w.walletManager.(*localWalletManager)
 		return crypto.FromECDSA(localMgr.GetPrivateKey()), nil
 	default:
 		return nil, fmt.Errorf("loaded wallet is not local")
@@ -310,13 +354,16 @@ func (w *Wallet) GetNodePrivateKeyBytes() ([]byte, error) {
 
 // Get the node account private key bytes
 func (w *Wallet) GetEthKeystore(password string) ([]byte, error) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	if w.walletManager == nil {
 		return nil, fmt.Errorf("wallet is not loaded")
 	}
 
 	switch w.walletManager.GetType() {
 	case wallet.WalletType_Local:
-		localMgr := w.walletManager.(*LocalWalletManager)
+		localMgr := w.walletManager.(*localWalletManager)
 		return localMgr.GetEthKeystore(password)
 	default:
 		return nil, fmt.Errorf("loaded wallet is not local")
@@ -325,6 +372,9 @@ func (w *Wallet) GetEthKeystore(password string) ([]byte, error) {
 
 // Serialize the wallet data as JSON
 func (w *Wallet) SerializeData() (string, error) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	if w.walletManager == nil {
 		return "", fmt.Errorf("wallet is not loaded")
 	}
@@ -333,13 +383,16 @@ func (w *Wallet) SerializeData() (string, error) {
 
 // Generate a BLS validator key from the provided path, using the node wallet's seed as a basis
 func (w *Wallet) GenerateValidatorKey(path string) ([]byte, error) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
 	if w.walletManager == nil {
 		return nil, fmt.Errorf("wallet is not loaded")
 	}
 
 	switch w.walletManager.GetType() {
 	case wallet.WalletType_Local:
-		localMgr := w.walletManager.(*LocalWalletManager)
+		localMgr := w.walletManager.(*localWalletManager)
 		return localMgr.GenerateValidatorKey(path)
 	default:
 		return nil, fmt.Errorf("loaded wallet is not local")
@@ -349,7 +402,7 @@ func (w *Wallet) GenerateValidatorKey(path string) ([]byte, error) {
 // Builds a local wallet keystore and saves its artifacts to disk
 func (w *Wallet) buildLocalWallet(derivationPath string, walletIndex uint, mnemonic string, password string, savePassword bool, testMode bool) error {
 	// Initialize the wallet with it
-	localMgr := NewLocalWalletManager(w.chainID)
+	localMgr := newLocalWalletManager(w.chainID)
 	localData, err := localMgr.InitializeKeystore(derivationPath, walletIndex, mnemonic, password)
 	if err != nil {
 		return fmt.Errorf("error initializing wallet keystore with recovered data: %w", err)
@@ -421,7 +474,7 @@ func (w *Wallet) loadWalletData(password string) (IWalletManager, error) {
 	var manager IWalletManager
 	switch data.Type {
 	case wallet.WalletType_Local:
-		localMgr := NewLocalWalletManager(w.chainID)
+		localMgr := newLocalWalletManager(w.chainID)
 		err = localMgr.LoadWallet(&data.LocalData, password)
 		if err != nil {
 			return nil, fmt.Errorf("error loading local wallet data at %s: %w", w.walletDataPath, err)
@@ -449,6 +502,11 @@ func (w *Wallet) saveWalletData(data *wallet.WalletData) error {
 		return fmt.Errorf("error writing wallet data to [%s]: %w", w.walletDataPath, err)
 	}
 	return nil
+}
+
+// Masquerade as another node address, running all node functions as that address (in read only mode)
+func (w *Wallet) masqueradeImpl(newAddress common.Address) error {
+	return w.addressManager.SetAndSaveAddress(newAddress)
 }
 
 // =============

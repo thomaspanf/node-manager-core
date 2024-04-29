@@ -155,6 +155,12 @@ func (p *Parameter[_]) Deserialize(serializedParam string, network Network) erro
 		return nil
 	}
 
+	// Set blanks to the default if blank isn't allowed
+	if !p.CanBeBlank && serializedParam == "" {
+		p.SetToDefault(network)
+		return nil
+	}
+
 	var err error
 	switch value := any(&p.Value).(type) {
 	case *int64:
@@ -182,10 +188,6 @@ func (p *Parameter[_]) Deserialize(serializedParam string, network Network) erro
 			if !regex.MatchString(serializedParam) {
 				return fmt.Errorf("cannot deserialize parameter [%s]: value [%s] did not match the expected format", p.ID, serializedParam)
 			}
-		}
-		if !p.CanBeBlank && serializedParam == "" {
-			p.SetToDefault(network)
-			return nil
 		}
 		*value = serializedParam
 	}

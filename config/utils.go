@@ -3,6 +3,7 @@ package config
 import (
 	"net"
 
+	"github.com/ethereum/go-ethereum/common"
 	externalip "github.com/glendc/go-external-ip"
 )
 
@@ -50,4 +51,10 @@ func GetExternalIP() (net.IP, error) {
 	ip6Consensus := externalip.DefaultConsensus(nil, nil)
 	ip6Consensus.UseIPProtocol(6)
 	return ip6Consensus.ExternalIP()
+}
+
+// Convert a hex string to an address, wrapped in a pointer
+func HexToAddressPtr(hexAddress string) *common.Address {
+	address := common.HexToAddress(hexAddress)
+	return &address
 }

@@ -44,7 +44,7 @@ func AddQueryablesToMulticall(mc *batch.MultiCaller, queryables ...IQueryable) {
 }
 
 // Adds all of the object's fields that implement IQueryable to the provided multicaller
-func QueryAllFields(object any, mc *batch.MultiCaller) error {
+func QueryAllFields(object any, mc *batch.MultiCaller) {
 	objectValue := reflect.ValueOf(object)
 	objectType := reflect.TypeOf(object)
 	if objectType.Kind() == reflect.Pointer {
@@ -65,21 +65,13 @@ func QueryAllFields(object any, mc *batch.MultiCaller) error {
 			} else if typeField.Type.Kind() == reflect.Pointer &&
 				typeField.Type.Elem().Kind() == reflect.Struct {
 				// If it's a pointer to a struct, recurse
-				err := QueryAllFields(field.Interface(), mc)
-				if err != nil {
-					return err
-				}
+				QueryAllFields(field.Interface(), mc)
 			} else if typeField.Type.Kind() == reflect.Struct {
 				// If it's a struct, recurse
-				err := QueryAllFields(field.Interface(), mc)
-				if err != nil {
-					return err
-				}
+				QueryAllFields(field.Interface(), mc)
 			}
 		}
 	}
-
-	return nil
 }
 
 // Normalize revert messages so they're all in ASCII format
