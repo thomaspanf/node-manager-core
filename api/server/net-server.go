@@ -16,13 +16,14 @@ import (
 type NetworkSocketApiServer struct {
 	logger   *slog.Logger
 	handlers []IHandler
+	ip       string
 	port     uint16
 	socket   net.Listener
 	server   http.Server
 	router   *mux.Router
 }
 
-func NewNetworkSocketApiServer(logger *slog.Logger, port uint16, handlers []IHandler, baseRoute string, apiVersion string) (*NetworkSocketApiServer, error) {
+func NewNetworkSocketApiServer(logger *slog.Logger, ip string, port uint16, handlers []IHandler, baseRoute string, apiVersion string) (*NetworkSocketApiServer, error) {
 	// Create the router
 	router := mux.NewRouter()
 
@@ -30,6 +31,7 @@ func NewNetworkSocketApiServer(logger *slog.Logger, port uint16, handlers []IHan
 	server := &NetworkSocketApiServer{
 		logger:   logger,
 		handlers: handlers,
+		ip:       ip,
 		port:     port,
 		router:   router,
 		server: http.Server{
@@ -38,7 +40,8 @@ func NewNetworkSocketApiServer(logger *slog.Logger, port uint16, handlers []IHan
 	}
 
 	// Register each route
-	nmcRouter := router.Host(baseRoute).PathPrefix("/api/v" + apiVersion).Subrouter()
+	//router.GetRoute().Host()
+	nmcRouter := router.PathPrefix("/" + baseRoute + "/api/v" + apiVersion).Subrouter()
 	for _, handler := range server.handlers {
 		handler.RegisterRoutes(nmcRouter)
 	}
@@ -49,7 +52,7 @@ func NewNetworkSocketApiServer(logger *slog.Logger, port uint16, handlers []IHan
 // Starts listening for incoming HTTP requests
 func (s *NetworkSocketApiServer) Start(wg *sync.WaitGroup) error {
 	// Create the socket
-	socket, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", s.port))
+	socket, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.ip, s.port))
 	if err != nil {
 		return fmt.Errorf("error creating socket: %w", err)
 	}
