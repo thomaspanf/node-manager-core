@@ -50,7 +50,8 @@ const (
 	FallbackBnHttpUrlID          string = "bnHttpUrl"
 
 	// Geth
-	GethEvmTimeoutID string = "evmTimeout"
+	GethEvmTimeoutID  string = "evmTimeout"
+	GethArchiveModeID string = "archiveMode"
 
 	// Lighthouse
 	LighthouseQuicPortID string = "p2pQuicPort"

@@ -65,7 +65,7 @@ func NewGethConfig() *GethConfig {
 
 		ArchiveMode: Parameter[bool]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 "archiveMode",
+				ID:                 ids.GethArchiveModeID,
 				Name:               "Enable Archive Mode",
 				Description:        "When enabled, Geth will run in \"archive\" mode which means it can recreate the state of the chain for a previous block. This is required for manually generating the Merkle rewards tree.\n\nArchive mode takes several TB of disk space, so only enable it if you need it and can support it.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
