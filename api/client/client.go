@@ -1,14 +1,11 @@
 package client
 
 import (
-	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"log/slog"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 
@@ -19,22 +16,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 )
-
-const (
-	jsonContentType string = "application/json"
-)
-
-// IRequester is an interface for making HTTP requests to a specific subroute on the NMC server
-type IRequester interface {
-	// The human-readable requester name (for logging)
-	GetName() string
-
-	// The name of the subroute to send requests to
-	GetRoute() string
-
-	// Context to hold settings and utilities the requester should use
-	GetContext() *RequesterContext
-}
 
 // Submit a GET request to the API server
 func SendGetRequest[DataType any](r IRequester, method string, requestName string, args map[string]string) (*types.ApiResponse[DataType], error) {
@@ -49,15 +30,9 @@ func SendGetRequest[DataType any](r IRequester, method string, requestName strin
 }
 
 // Submit a GET request to the API server
-func RawGetRequest[DataType any](context *RequesterContext, path string, params map[string]string) (*types.ApiResponse[DataType], error) {
-	// Make sure the socket exists
-	_, err := os.Stat(context.socketPath)
-	if errors.Is(err, fs.ErrNotExist) {
-		return nil, fmt.Errorf("the socket at [%s] does not exist - please start the service and try again", context.socketPath)
-	}
-
+func RawGetRequest[DataType any](context IRequesterContext, path string, params map[string]string) (*types.ApiResponse[DataType], error) {
 	// Create the request
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/%s", context.base, path), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", context.GetAddressBase(), path), nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating HTTP request: %w", err)
 	}
@@ -70,10 +45,10 @@ func RawGetRequest[DataType any](context *RequesterContext, path string, params 
 	req.URL.RawQuery = values.Encode()
 
 	// Debug log
-	context.logger.Debug("API Request", slog.String(log.MethodKey, http.MethodGet), slog.String(log.QueryKey, req.URL.String()))
+	context.GetLogger().Debug("API Request", slog.String(log.MethodKey, http.MethodGet), slog.String(log.QueryKey, req.URL.String()))
 
 	// Run the request
-	resp, err := context.client.Do(req)
+	resp, err := context.SendRequest(req)
 	return HandleResponse[DataType](context, resp, path, err)
 }
 
@@ -93,25 +68,28 @@ func SendPostRequest[DataType any](r IRequester, method string, requestName stri
 }
 
 // Submit a POST request to the API server
-func RawPostRequest[DataType any](context *RequesterContext, path string, body string) (*types.ApiResponse[DataType], error) {
-	// Make sure the socket exists
-	_, err := os.Stat(context.socketPath)
-	if errors.Is(err, fs.ErrNotExist) {
-		return nil, fmt.Errorf("the socket at [%s] does not exist - please start the service and try again", context.socketPath)
+func RawPostRequest[DataType any](context IRequesterContext, path string, body string) (*types.ApiResponse[DataType], error) {
+	// Create the request
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/%s", context.GetAddressBase(), path), strings.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("error creating HTTP request: %w", err)
 	}
+	req.Header.Set("Content-Type", jsonContentType)
 
 	// Debug log
-	context.logger.Debug("API Request", slog.String(log.MethodKey, http.MethodPost), slog.String(log.PathKey, path), slog.String(log.BodyKey, body))
+	context.GetLogger().Debug("API Request", slog.String(log.MethodKey, http.MethodPost), slog.String(log.PathKey, path), slog.String(log.BodyKey, body))
 
-	resp, err := context.client.Post(fmt.Sprintf("http://%s/%s", context.base, path), jsonContentType, strings.NewReader(body))
+	// Run the request
+	resp, err := context.SendRequest(req)
 	return HandleResponse[DataType](context, resp, path, err)
 }
 
 // Processes a response to a request
-func HandleResponse[DataType any](context *RequesterContext, resp *http.Response, path string, err error) (*types.ApiResponse[DataType], error) {
+func HandleResponse[DataType any](context IRequesterContext, resp *http.Response, path string, err error) (*types.ApiResponse[DataType], error) {
 	if err != nil {
 		return nil, fmt.Errorf("error requesting %s: %w", path, err)
 	}
+	logger := context.GetLogger()
 
 	// Read the body
 	defer resp.Body.Close()
@@ -122,7 +100,7 @@ func HandleResponse[DataType any](context *RequesterContext, resp *http.Response
 
 	// Handle 404s specially since they won't have a JSON body
 	if resp.StatusCode == http.StatusNotFound {
-		context.logger.Debug("API Response (raw)", slog.String(log.CodeKey, resp.Status), slog.String(log.BodyKey, string(bytes)))
+		logger.Debug("API Response (raw)", slog.String(log.CodeKey, resp.Status), slog.String(log.BodyKey, string(bytes)))
 		return nil, fmt.Errorf("route '%s' not found", path)
 	}
 
@@ -130,18 +108,18 @@ func HandleResponse[DataType any](context *RequesterContext, resp *http.Response
 	var parsedResponse types.ApiResponse[DataType]
 	err = json.Unmarshal(bytes, &parsedResponse)
 	if err != nil {
-		context.logger.Debug("API Response (raw)", slog.String(log.CodeKey, resp.Status), slog.String(log.BodyKey, string(bytes)))
+		logger.Debug("API Response (raw)", slog.String(log.CodeKey, resp.Status), slog.String(log.BodyKey, string(bytes)))
 		return nil, fmt.Errorf("error deserializing response to %s: %w", path, err)
 	}
 
 	// Check if the request failed
 	if resp.StatusCode != http.StatusOK {
-		context.logger.Debug("API Response", slog.String(log.PathKey, path), slog.String(log.CodeKey, resp.Status), slog.String("err", parsedResponse.Error))
+		logger.Debug("API Response", slog.String(log.PathKey, path), slog.String(log.CodeKey, resp.Status), slog.String("err", parsedResponse.Error))
 		return nil, fmt.Errorf(parsedResponse.Error)
 	}
 
 	// Debug log
-	context.logger.Debug("API Response", slog.String(log.BodyKey, string(bytes)))
+	logger.Debug("API Response", slog.String(log.BodyKey, string(bytes)))
 
 	return &parsedResponse, nil
 }

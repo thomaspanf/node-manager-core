@@ -6,3 +6,7 @@ import "github.com/gorilla/mux"
 type IContextFactory interface {
 	RegisterRoute(router *mux.Router)
 }
+
+type IHandler interface {
+	RegisterRoutes(router *mux.Router)
+}
