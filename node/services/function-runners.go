@@ -18,7 +18,7 @@ type function2[ClientType any, ReturnType1 any, ReturnType2 any] func(ClientType
 
 // Attempts to run a function progressively through each client until one succeeds or they all fail.
 // Expects functions with 1 output and an error; for functions with other signatures, see the other runFunctionX functions.
-func runFunction1[ClientType any, ReturnType any](m IClientManager[ClientType], ctx context.Context, function function1[ClientType, ReturnType]) (ReturnType, error) {
+func runFunction1[ClientType any, ReturnType any](m iClientManagerImpl[ClientType], ctx context.Context, function function1[ClientType, ReturnType]) (ReturnType, error) {
 	logger, _ := log.FromContext(ctx)
 	var blank ReturnType
 	typeName := m.GetClientTypeName()
@@ -30,7 +30,7 @@ func runFunction1[ClientType any, ReturnType any](m IClientManager[ClientType], 
 		if err != nil {
 			if isDisconnected(err) {
 				// If it's disconnected, log it and try the fallback
-				m.setPrimaryReady(false)
+				m.SetPrimaryReady(false)
 				if m.IsFallbackEnabled() {
 					logger.Warn("Primary "+typeName+" client disconnected, using fallback...", log.Err(err))
 					return runFunction1[ClientType, ReturnType](m, ctx, function)
@@ -53,7 +53,7 @@ func runFunction1[ClientType any, ReturnType any](m IClientManager[ClientType], 
 			if isDisconnected(err) {
 				// If it's disconnected, log it and try the fallback
 				logger.Warn("Fallback "+typeName+" disconnected", log.Err(err))
-				m.setFallbackReady(false)
+				m.SetFallbackReady(false)
 				return blank, fmt.Errorf("all " + typeName + "s failed")
 			}
 
@@ -68,7 +68,7 @@ func runFunction1[ClientType any, ReturnType any](m IClientManager[ClientType], 
 }
 
 // Run a function with 0 outputs and an error
-func runFunction0[ClientType any](m IClientManager[ClientType], ctx context.Context, function function0[ClientType]) error {
+func runFunction0[ClientType any](m iClientManagerImpl[ClientType], ctx context.Context, function function0[ClientType]) error {
 	_, err := runFunction1(m, ctx, func(client ClientType) (any, error) {
 		return nil, function(client)
 	})
@@ -76,7 +76,7 @@ func runFunction0[ClientType any](m IClientManager[ClientType], ctx context.Cont
 }
 
 // Run a function with 2 outputs and an error
-func runFunction2[ClientType any, ReturnType1 any, ReturnType2 any](m IClientManager[ClientType], ctx context.Context, function function2[ClientType, ReturnType1, ReturnType2]) (ReturnType1, ReturnType2, error) {
+func runFunction2[ClientType any, ReturnType1 any, ReturnType2 any](m iClientManagerImpl[ClientType], ctx context.Context, function function2[ClientType, ReturnType1, ReturnType2]) (ReturnType1, ReturnType2, error) {
 	type out struct {
 		arg1 ReturnType1
 		arg2 ReturnType2

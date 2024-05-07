@@ -65,11 +65,11 @@ func (m *BeaconClientManager) GetClientTypeName() string {
 	return "Beacon Node"
 }
 
-func (m *BeaconClientManager) setPrimaryReady(ready bool) {
+func (m *BeaconClientManager) SetPrimaryReady(ready bool) {
 	m.primaryReady = ready
 }
 
-func (m *BeaconClientManager) setFallbackReady(ready bool) {
+func (m *BeaconClientManager) SetFallbackReady(ready bool) {
 	m.fallbackReady = ready
 }
 

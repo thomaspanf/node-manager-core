@@ -83,11 +83,11 @@ func (m *ExecutionClientManager) GetClientTypeName() string {
 	return "Execution Client"
 }
 
-func (m *ExecutionClientManager) setPrimaryReady(ready bool) {
+func (m *ExecutionClientManager) SetPrimaryReady(ready bool) {
 	m.primaryReady = ready
 }
 
-func (m *ExecutionClientManager) setFallbackReady(ready bool) {
+func (m *ExecutionClientManager) SetFallbackReady(ready bool) {
 	m.fallbackReady = ready
 }
 
