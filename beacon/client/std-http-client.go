@@ -653,6 +653,7 @@ func (c *StandardHttpClient) getFinalityCheckpoints(ctx context.Context, stateId
 }
 
 // Get fork
+/*
 func (c *StandardHttpClient) getFork(ctx context.Context, stateId string) (ForkResponse, error) {
 	responseBody, status, err := c.getRequest(ctx, fmt.Sprintf(RequestForkPath, stateId))
 	if err != nil {
@@ -667,6 +668,7 @@ func (c *StandardHttpClient) getFork(ctx context.Context, stateId string) (ForkR
 	}
 	return fork, nil
 }
+*/
 
 // Get validators
 func (c *StandardHttpClient) getValidators(ctx context.Context, stateId string, pubkeys []string) (ValidatorsResponse, error) {
