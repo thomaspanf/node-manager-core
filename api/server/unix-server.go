@@ -12,20 +12,11 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/fatih/color"
 	"github.com/gorilla/mux"
 	"github.com/rocket-pool/node-manager-core/log"
 )
 
-const (
-	ApiLogColor color.Attribute = color.FgHiBlue
-)
-
-type IHandler interface {
-	RegisterRoutes(router *mux.Router)
-}
-
-type ApiServer struct {
+type UnixSocketApiServer struct {
 	logger     *slog.Logger
 	handlers   []IHandler
 	socketPath string
@@ -34,12 +25,12 @@ type ApiServer struct {
 	router     *mux.Router
 }
 
-func NewApiServer(logger *slog.Logger, socketPath string, handlers []IHandler, baseRoute string, apiVersion string) (*ApiServer, error) {
+func NewUnixSocketApiServer(logger *slog.Logger, socketPath string, handlers []IHandler, baseRoute string, apiVersion string) (*UnixSocketApiServer, error) {
 	// Create the router
 	router := mux.NewRouter()
 
 	// Create the manager
-	server := &ApiServer{
+	server := &UnixSocketApiServer{
 		logger:     logger,
 		handlers:   handlers,
 		socketPath: socketPath,
@@ -66,7 +57,7 @@ func NewApiServer(logger *slog.Logger, socketPath string, handlers []IHandler, b
 }
 
 // Starts listening for incoming HTTP requests
-func (s *ApiServer) Start(wg *sync.WaitGroup, socketOwnerUid uint32, socketOwnerGid uint32) error {
+func (s *UnixSocketApiServer) Start(wg *sync.WaitGroup, socketOwnerUid uint32, socketOwnerGid uint32) error {
 	// Remove the socket if it's already there
 	_, err := os.Stat(s.socketPath)
 	if !errors.Is(err, fs.ErrNotExist) {
@@ -109,7 +100,7 @@ func (s *ApiServer) Start(wg *sync.WaitGroup, socketOwnerUid uint32, socketOwner
 }
 
 // Stops the HTTP listener
-func (s *ApiServer) Stop() error {
+func (s *UnixSocketApiServer) Stop() error {
 	err := s.server.Shutdown(context.Background())
 	if err != nil {
 		return fmt.Errorf("error stopping listener: %w", err)

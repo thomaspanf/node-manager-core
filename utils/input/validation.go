@@ -21,18 +21,6 @@ const (
 	MinPasswordLength int = 12
 )
 
-//
-// General types
-//
-
-// Validate command argument count
-func ValidateArgCount(argCount int, expectedCount int) error {
-	if argCount != expectedCount {
-		return fmt.Errorf("Incorrect argument count; expected %d but have %d", expectedCount, argCount)
-	}
-	return nil
-}
-
 // Validate a comma-delimited batch of inputs
 func ValidateBatch[ReturnType any](name string, value string, validate func(string, string) (ReturnType, error)) ([]ReturnType, error) {
 	elements := strings.Split(value, ",")
