@@ -20,108 +20,107 @@ const (
 )
 
 // Handle routes called with an invalid method
-func HandleInvalidMethod(logger *slog.Logger, w http.ResponseWriter) {
-	writeResponse(w, logger, http.StatusMethodNotAllowed, "", nil, []byte{})
+func HandleInvalidMethod(logger *slog.Logger, w http.ResponseWriter) error {
+	return writeResponse(w, logger, http.StatusMethodNotAllowed, "", nil, []byte{})
 }
 
 // Handles an error related to parsing the input parameters of a request
-func HandleInputError(logger *slog.Logger, w http.ResponseWriter, err error) {
+func HandleInputError(logger *slog.Logger, w http.ResponseWriter, err error) error {
 	msg := err.Error()
-	writeResponse(w, logger, http.StatusBadRequest, "", err, formatError(msg))
+	return writeResponse(w, logger, http.StatusBadRequest, "", err, formatError(msg))
 }
 
 // The request couldn't complete because the node requires an address but one wasn't present
-func HandleAddressNotPresent(logger *slog.Logger, w http.ResponseWriter, err error) {
+func HandleAddressNotPresent(logger *slog.Logger, w http.ResponseWriter, err error) error {
 	msg := fmt.Sprintf(addressNotPresentMessage, err.Error())
-	writeResponse(w, logger, http.StatusUnprocessableEntity, "Address not present", err, formatError(msg))
+	return writeResponse(w, logger, http.StatusUnprocessableEntity, "Address not present", err, formatError(msg))
 }
 
 // The request couldn't complete because the node requires a wallet but one isn't present or useable
-func HandleWalletNotReady(logger *slog.Logger, w http.ResponseWriter, err error) {
+func HandleWalletNotReady(logger *slog.Logger, w http.ResponseWriter, err error) error {
 	msg := fmt.Sprintf(walletNotReadyMessage, err.Error())
-	writeResponse(w, logger, http.StatusUnprocessableEntity, "Wallet not ready", err, formatError(msg))
+	return writeResponse(w, logger, http.StatusUnprocessableEntity, "Wallet not ready", err, formatError(msg))
 }
 
 // The request couldn't complete because it's trying to create a resource that already exists, or use a resource that conflicts with what's requested
-func HandleResourceConflict(logger *slog.Logger, w http.ResponseWriter, err error) {
+func HandleResourceConflict(logger *slog.Logger, w http.ResponseWriter, err error) error {
 	msg := fmt.Sprintf(resourceConflictMessage, err.Error())
-	writeResponse(w, logger, http.StatusConflict, "Resource conflict", err, formatError(msg))
+	return writeResponse(w, logger, http.StatusConflict, "Resource conflict", err, formatError(msg))
 }
 
 // The request couldn't complete because it's trying to access a resource that didn't exist or couldn't be found
-func HandleResourceNotFound(logger *slog.Logger, w http.ResponseWriter, err error) {
+func HandleResourceNotFound(logger *slog.Logger, w http.ResponseWriter, err error) error {
 	msg := fmt.Sprintf(resourceNotFoundMessage, err.Error())
-	writeResponse(w, logger, http.StatusNotFound, "Resource not found", err, formatError(msg))
+	return writeResponse(w, logger, http.StatusNotFound, "Resource not found", err, formatError(msg))
 }
 
 // The request couldn't complete because the clients aren't synced yet
-func HandleClientNotSynced(logger *slog.Logger, w http.ResponseWriter, err error) {
+func HandleClientNotSynced(logger *slog.Logger, w http.ResponseWriter, err error) error {
 	msg := clientsNotSyncedMessage
-	writeResponse(w, logger, http.StatusUnprocessableEntity, "Clients not synced", err, formatError(msg))
+	return writeResponse(w, logger, http.StatusUnprocessableEntity, "Clients not synced", err, formatError(msg))
 }
 
 // The request couldn't complete because the chain state is preventing the request (it will revert if submitted)
-func HandleInvalidChainState(logger *slog.Logger, w http.ResponseWriter, err error) {
+func HandleInvalidChainState(logger *slog.Logger, w http.ResponseWriter, err error) error {
 	msg := fmt.Sprintf(invalidChainStateMessage, err.Error())
-	writeResponse(w, logger, http.StatusUnprocessableEntity, "Invalid chain state", err, formatError(msg))
+	return writeResponse(w, logger, http.StatusUnprocessableEntity, "Invalid chain state", err, formatError(msg))
 }
 
 // The request couldn't complete because of a server error
-func HandleServerError(logger *slog.Logger, w http.ResponseWriter, err error) {
+func HandleServerError(logger *slog.Logger, w http.ResponseWriter, err error) error {
 	msg := err.Error()
-	writeResponse(w, logger, http.StatusInternalServerError, "", err, formatError(msg))
+	return writeResponse(w, logger, http.StatusInternalServerError, "", err, formatError(msg))
 }
 
 // The request completed successfully
-func HandleSuccess(logger *slog.Logger, w http.ResponseWriter, response any) {
+func HandleSuccess(logger *slog.Logger, w http.ResponseWriter, response any) error {
 	// Serialize the response
 	bytes, err := json.Marshal(response)
 	if err != nil {
-		HandleServerError(logger, w, fmt.Errorf("error serializing response: %w", err))
-		return
+		return HandleServerError(logger, w, fmt.Errorf("error serializing response: %w", err))
 	}
 
 	// Write it
 	logger.Debug("Response body", slog.String(log.BodyKey, string(bytes)))
-	writeResponse(w, logger, http.StatusOK, "", nil, bytes)
+	return writeResponse(w, logger, http.StatusOK, "", nil, bytes)
 }
 
 // Handles an API response for a request that could not be completed
-func HandleFailedResponse(logger *slog.Logger, w http.ResponseWriter, status types.ResponseStatus, err error) {
+func HandleFailedResponse(logger *slog.Logger, w http.ResponseWriter, status types.ResponseStatus, err error) error {
 	switch status {
 	case types.ResponseStatus_InvalidArguments:
-		HandleInputError(logger, w, err)
+		return HandleInputError(logger, w, err)
 	case types.ResponseStatus_AddressNotPresent:
-		HandleAddressNotPresent(logger, w, err)
+		return HandleAddressNotPresent(logger, w, err)
 	case types.ResponseStatus_WalletNotReady:
-		HandleWalletNotReady(logger, w, err)
+		return HandleWalletNotReady(logger, w, err)
 	case types.ResponseStatus_ResourceConflict:
-		HandleResourceConflict(logger, w, err)
+		return HandleResourceConflict(logger, w, err)
 	case types.ResponseStatus_ResourceNotFound:
-		HandleResourceNotFound(logger, w, err)
+		return HandleResourceNotFound(logger, w, err)
 	case types.ResponseStatus_ClientsNotSynced:
-		HandleClientNotSynced(logger, w, err)
+		return HandleClientNotSynced(logger, w, err)
 	case types.ResponseStatus_InvalidChainState:
-		HandleInvalidChainState(logger, w, err)
+		return HandleInvalidChainState(logger, w, err)
 	case types.ResponseStatus_Error:
-		HandleServerError(logger, w, err)
+		return HandleServerError(logger, w, err)
 	default:
-		HandleServerError(logger, w, fmt.Errorf("unknown response status: %d", status))
+		return HandleServerError(logger, w, fmt.Errorf("unknown response status: %d", status))
 	}
 }
 
 // Handles an API response
-func HandleResponse(logger *slog.Logger, w http.ResponseWriter, status types.ResponseStatus, response any, err error) {
+func HandleResponse(logger *slog.Logger, w http.ResponseWriter, status types.ResponseStatus, response any, err error) error {
 	switch status {
 	case types.ResponseStatus_Success:
-		HandleSuccess(logger, w, response)
+		return HandleSuccess(logger, w, response)
 	default:
-		HandleFailedResponse(logger, w, status, err)
+		return HandleFailedResponse(logger, w, status, err)
 	}
 }
 
 // Writes a response to an HTTP request back to the client and logs it
-func writeResponse(w http.ResponseWriter, logger *slog.Logger, statusCode int, cause string, err error, message []byte) {
+func writeResponse(w http.ResponseWriter, logger *slog.Logger, statusCode int, cause string, err error, message []byte) error {
 	// Prep the log attributes
 	codeMsg := fmt.Sprintf("%d %s", statusCode, http.StatusText(statusCode))
 	attrs := []any{
@@ -148,7 +147,8 @@ func writeResponse(w http.ResponseWriter, logger *slog.Logger, statusCode int, c
 	// Write it to the client
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	w.Write(message)
+	_, writeErr := w.Write(message)
+	return writeErr
 }
 
 // JSONifies an error for responding to requests
