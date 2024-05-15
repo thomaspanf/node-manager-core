@@ -18,16 +18,17 @@ type Committee struct {
 // substantially.
 var validatorSlicePool sync.Pool = sync.Pool{
 	New: func() any {
-		return make([]string, 0, 1024)
+		buffer := make([]string, 0, 1024)
+		return &buffer
 	},
 }
 
 func (c *Committee) UnmarshalJSON(body []byte) error {
 	var committee map[string]*json.RawMessage
 
-	pooledSlice := validatorSlicePool.Get().([]string)
+	pooledSlice := validatorSlicePool.Get().(*[]string)
 
-	c.Validators = pooledSlice
+	c.Validators = *pooledSlice
 
 	// Partially parse the json
 	if err := json.Unmarshal(body, &committee); err != nil {
@@ -70,6 +71,6 @@ func (c *CommitteesResponse) Release() {
 		// Reset the slice length to 0 (capacity stays the same)
 		committee.Validators = committee.Validators[:0]
 		// Return the slice for reuse
-		validatorSlicePool.Put(committee.Validators)
+		validatorSlicePool.Put(&committee.Validators)
 	}
 }
