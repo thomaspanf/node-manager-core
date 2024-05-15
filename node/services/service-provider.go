@@ -73,7 +73,7 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration) (*Servi
 
 	// Beacon manager
 	primaryBnUrl, fallbackBnUrl := cfg.GetBeaconNodeUrls()
-	bcManager, err := NewBeaconClientManager(primaryBnUrl, fallbackBnUrl, clientTimeout)
+	bcManager, err := NewBeaconClientManager(primaryBnUrl, fallbackBnUrl, resources.ChainID, clientTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("error creating Beacon client manager: %w", err)
 	}

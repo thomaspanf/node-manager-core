@@ -259,26 +259,30 @@ func (m *ExecutionClientManager) SyncProgress(ctx context.Context) (*ethereum.Sy
 /// =================
 
 // Get the status of the primary and fallback clients
-func (m *ExecutionClientManager) CheckStatus(ctx context.Context) *apitypes.ClientManagerStatus {
+func (m *ExecutionClientManager) CheckStatus(ctx context.Context, checkChainIDs bool) *apitypes.ClientManagerStatus {
 	status := &apitypes.ClientManagerStatus{
 		FallbackEnabled: m.fallbackEc != nil,
 	}
 
 	// Get the primary EC status
-	status.PrimaryClientStatus = checkEcStatus(ctx, m.primaryEc)
+	status.PrimaryClientStatus = checkEcStatus(ctx, m.primaryEc, checkChainIDs)
 
-	// Flag if primary client is ready
-	m.primaryReady = (status.PrimaryClientStatus.IsWorking && status.PrimaryClientStatus.IsSynced)
+	// Check if primary is using the expected network
+	if checkChainIDs && status.PrimaryClientStatus.Error == "" && status.PrimaryClientStatus.ChainId != m.expectedChainID {
+		m.primaryReady = false
+		status.PrimaryClientStatus.Error = fmt.Sprintf("The primary client is using a different chain (%d) than what your node is configured for (%d)", status.PrimaryClientStatus.ChainId, m.expectedChainID)
+	} else {
+		// Flag if primary client is ready
+		m.primaryReady = (status.PrimaryClientStatus.IsWorking && status.PrimaryClientStatus.IsSynced)
+	}
 
 	// Get the fallback EC status if applicable
 	if status.FallbackEnabled {
-		status.FallbackClientStatus = checkEcStatus(ctx, m.fallbackEc)
+		status.FallbackClientStatus = checkEcStatus(ctx, m.fallbackEc, checkChainIDs)
 		// Check if fallback is using the expected network
-		if status.FallbackClientStatus.Error == "" && status.FallbackClientStatus.ChainId != m.expectedChainID {
+		if checkChainIDs && status.FallbackClientStatus.Error == "" && status.FallbackClientStatus.ChainId != m.expectedChainID {
 			m.fallbackReady = false
-			colorReset := "\033[0m"
-			colorYellow := "\033[33m"
-			status.FallbackClientStatus.Error = fmt.Sprintf("The fallback client is using a different chain [%s%s%s, Chain ID %d] than what your node is configured for [%s, Chain ID %d]", colorYellow, getNetworkNameFromId(status.FallbackClientStatus.ChainId), colorReset, status.FallbackClientStatus.ChainId, getNetworkNameFromId(m.expectedChainID), m.expectedChainID)
+			status.FallbackClientStatus.Error = fmt.Sprintf("The fallback client is using a different chain (%d) than what your node is configured for (%d)", status.FallbackClientStatus.ChainId, m.expectedChainID)
 			return status
 		}
 	}
@@ -288,35 +292,26 @@ func (m *ExecutionClientManager) CheckStatus(ctx context.Context) *apitypes.Clie
 	return status
 }
 
-func getNetworkNameFromId(networkId uint) string {
-	switch networkId {
-	case 1:
-		return "Ethereum Mainnet"
-	case 17000:
-		return "Holesky Testnet"
-	default:
-		return "Unknown Network"
-	}
-}
-
 // Check the client status
-func checkEcStatus(ctx context.Context, client *ethclient.Client) apitypes.ClientStatus {
+func checkEcStatus(ctx context.Context, client *ethclient.Client, checkChainIDs bool) apitypes.ClientStatus {
 	status := apitypes.ClientStatus{}
 
-	// Get the Chain ID
-	chainId, err := client.ChainID(ctx)
-	if err != nil {
-		status.Error = fmt.Sprintf("Sync progress check failed with [%s]", err.Error())
-		status.IsSynced = false
-		status.IsWorking = false
-		return status
+	if checkChainIDs {
+		// Get the Chain ID
+		chainId, err := client.ChainID(ctx)
+		if err != nil {
+			status.Error = fmt.Sprintf("Chain ID check failed with [%s]", err.Error())
+			status.IsSynced = false
+			status.IsWorking = false
+			return status
+		}
+
+		if chainId != nil {
+			status.ChainId = uint(chainId.Uint64())
+		}
 	}
 
-	if chainId != nil {
-		status.ChainId = uint(chainId.Uint64())
-	}
-
-	// Get the fallback's sync progress
+	// Get the client's sync progress
 	progress, err := client.SyncProgress(ctx)
 	if err != nil {
 		status.Error = fmt.Sprintf("Sync progress check failed with [%s]", err.Error())
