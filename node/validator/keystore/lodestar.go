@@ -2,7 +2,6 @@ package keystore
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -80,7 +79,7 @@ func (ks *LodestarKeystoreManager) StoreValidatorKey(key *eth2types.BLSPrivateKe
 	}
 
 	// Write secret to disk
-	if err := ioutil.WriteFile(secretFilePath, []byte(password), FileMode); err != nil {
+	if err := os.WriteFile(secretFilePath, []byte(password), FileMode); err != nil {
 		return fmt.Errorf("error writing validator secret to disk: %w", err)
 	}
 
@@ -93,7 +92,7 @@ func (ks *LodestarKeystoreManager) StoreValidatorKey(key *eth2types.BLSPrivateKe
 	}
 
 	// Write key store to disk
-	if err := ioutil.WriteFile(keyFilePath, keyStoreBytes, FileMode); err != nil {
+	if err := os.WriteFile(keyFilePath, keyStoreBytes, FileMode); err != nil {
 		return fmt.Errorf("error writing validator key to disk: %w", err)
 	}
 	return nil

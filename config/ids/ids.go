@@ -100,6 +100,10 @@ const (
 	PrysmOpenRpcPortID string = "openRpcPort"
 	PrysmRpcUrlID      string = "prysmRpcUrl"
 
+	// Reth
+	RethMaxInboundPeersID  string = "maxInboundPeers"
+	RethMaxOutboundPeersID string = "maxOutboundPeers"
+
 	// Teku
 	TekuJvmHeapSizeID           string = "jvmHeapSize"
 	TekuArchiveModeID           string = "archiveMode"

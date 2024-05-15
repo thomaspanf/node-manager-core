@@ -17,11 +17,11 @@ type BeaconClientManager struct {
 	fallbackBc      beacon.IBeaconClient
 	primaryReady    bool
 	fallbackReady   bool
-	ignoreSyncCheck bool
+	expectedChainID uint
 }
 
 // Creates a new BeaconClientManager instance
-func NewBeaconClientManager(primaryProvider string, fallbackProvider string, clientTimeout time.Duration) (*BeaconClientManager, error) {
+func NewBeaconClientManager(primaryProvider string, fallbackProvider string, chainID uint, clientTimeout time.Duration) (*BeaconClientManager, error) {
 	var primaryBc beacon.IBeaconClient
 	var fallbackBc beacon.IBeaconClient
 	primaryBc = client.NewStandardHttpClient(primaryProvider, clientTimeout)
@@ -30,10 +30,11 @@ func NewBeaconClientManager(primaryProvider string, fallbackProvider string, cli
 	}
 
 	return &BeaconClientManager{
-		primaryBc:     primaryBc,
-		fallbackBc:    fallbackBc,
-		primaryReady:  true,
-		fallbackReady: fallbackBc != nil,
+		primaryBc:       primaryBc,
+		fallbackBc:      fallbackBc,
+		primaryReady:    true,
+		fallbackReady:   fallbackBc != nil,
+		expectedChainID: chainID,
 	}, nil
 }
 
@@ -65,11 +66,11 @@ func (m *BeaconClientManager) GetClientTypeName() string {
 	return "Beacon Node"
 }
 
-func (m *BeaconClientManager) setPrimaryReady(ready bool) {
+func (m *BeaconClientManager) SetPrimaryReady(ready bool) {
 	m.primaryReady = ready
 }
 
-func (m *BeaconClientManager) setFallbackReady(ready bool) {
+func (m *BeaconClientManager) SetFallbackReady(ready bool) {
 	m.fallbackReady = ready
 }
 
@@ -215,42 +216,55 @@ func (m *BeaconClientManager) ChangeWithdrawalCredentials(ctx context.Context, v
 /// =================
 
 // Get the status of the primary and fallback clients
-func (m *BeaconClientManager) CheckStatus(ctx context.Context) *types.ClientManagerStatus {
+func (m *BeaconClientManager) CheckStatus(ctx context.Context, checkChainIDs bool) *types.ClientManagerStatus {
 	status := &types.ClientManagerStatus{
 		FallbackEnabled: m.fallbackBc != nil,
 	}
 
-	// Ignore the sync check and just use the predefined settings if requested
-	if m.ignoreSyncCheck {
-		status.PrimaryClientStatus.IsWorking = m.primaryReady
-		status.PrimaryClientStatus.IsSynced = m.primaryReady
-		if status.FallbackEnabled {
-			status.FallbackClientStatus.IsWorking = m.fallbackReady
-			status.FallbackClientStatus.IsSynced = m.fallbackReady
-		}
-		return status
-	}
-
 	// Get the primary BC status
-	status.PrimaryClientStatus = checkBcStatus(ctx, m.primaryBc)
+	status.PrimaryClientStatus = checkBcStatus(ctx, m.primaryBc, checkChainIDs)
+	if checkChainIDs && status.PrimaryClientStatus.Error == "" && status.PrimaryClientStatus.ChainId != m.expectedChainID {
+		m.primaryReady = false
+		status.PrimaryClientStatus.Error = fmt.Sprintf("The primary client is using a different chain (%d) than what your node is configured for (%d)", status.PrimaryClientStatus.ChainId, m.expectedChainID)
+	} else {
+		// Flag if primary client is ready
+		m.primaryReady = (status.PrimaryClientStatus.IsWorking && status.PrimaryClientStatus.IsSynced)
+	}
 
 	// Get the fallback BC status if applicable
 	if status.FallbackEnabled {
-		status.FallbackClientStatus = checkBcStatus(ctx, m.fallbackBc)
+		status.FallbackClientStatus = checkBcStatus(ctx, m.fallbackBc, checkChainIDs)
+		// Check if fallback is using the expected network
+		if checkChainIDs && status.FallbackClientStatus.Error == "" && status.FallbackClientStatus.ChainId != m.expectedChainID {
+			m.fallbackReady = false
+			status.FallbackClientStatus.Error = fmt.Sprintf("The fallback client is using a different chain (%d) than what your node is configured for (%d)", status.FallbackClientStatus.ChainId, m.expectedChainID)
+			return status
+		}
 	}
 
-	// Flag the ready clients
-	m.primaryReady = (status.PrimaryClientStatus.IsWorking && status.PrimaryClientStatus.IsSynced)
 	m.fallbackReady = (status.FallbackEnabled && status.FallbackClientStatus.IsWorking && status.FallbackClientStatus.IsSynced)
 
 	return status
 }
 
 // Check the client status
-func checkBcStatus(ctx context.Context, client beacon.IBeaconClient) types.ClientStatus {
+func checkBcStatus(ctx context.Context, client beacon.IBeaconClient, checkChainIDs bool) types.ClientStatus {
 	status := types.ClientStatus{}
 
-	// Get the fallback's sync progress
+	if checkChainIDs {
+		// Get the Chain ID
+		contractInfo, err := client.GetEth2DepositContract(ctx)
+		if err != nil {
+			status.Error = fmt.Sprintf("Chain ID check failed with [%s]", err.Error())
+			status.IsSynced = false
+			status.IsWorking = false
+			return status
+		}
+
+		status.ChainId = uint(contractInfo.ChainID)
+	}
+
+	// Get the client's sync progress
 	syncStatus, err := client.GetSyncStatus(ctx)
 	if err != nil {
 		status.Error = fmt.Sprintf("Sync progress check failed with [%s]", err.Error())

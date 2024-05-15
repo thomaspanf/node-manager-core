@@ -7,8 +7,12 @@ type IClientManager[ClientType any] interface {
 	IsFallbackReady() bool
 	IsFallbackEnabled() bool
 	GetClientTypeName() string
+}
+
+type iClientManagerImpl[ClientType any] interface {
+	IClientManager[ClientType]
 
 	// Internal functions
-	setPrimaryReady(bool)
-	setFallbackReady(bool)
+	SetPrimaryReady(bool)
+	SetFallbackReady(bool)
 }

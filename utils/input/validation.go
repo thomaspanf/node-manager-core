@@ -201,7 +201,7 @@ func ValidateWalletMnemonic(name, value string) (string, error) {
 
 // Validate a timezone location
 func ValidateTimezoneLocation(name, value string) (string, error) {
-	if !regexp.MustCompile("^([a-zA-Z_]{2,}\\/)+[a-zA-Z_]{2,}$").MatchString(value) {
+	if !regexp.MustCompile(`^([a-zA-Z_]{2,}\/)+[a-zA-Z_]{2,}$`).MatchString(value) {
 		return "", fmt.Errorf("Invalid %s '%s' - must be in the format 'Country/City'", name, value)
 	}
 	return value, nil
@@ -260,9 +260,7 @@ func ValidatePubkey(name, value string) (beacon.ValidatorPubkey, error) {
 // Validate a hex-encoded byte array
 func ValidateByteArray(name, value string) ([]byte, error) {
 	// Remove a 0x prefix if present
-	if strings.HasPrefix(value, "0x") {
-		value = value[2:]
-	}
+	value = strings.TrimPrefix(value, "0x")
 
 	// Try to parse the string (removing the prefix)
 	bytes, err := hex.DecodeString(value)

@@ -42,14 +42,14 @@ func GetPortModes(warningOverride string) []*ParameterOption[RpcPortMode] {
 func GetExternalIP() (net.IP, error) {
 	// Try IPv4 first
 	ip4Consensus := externalip.DefaultConsensus(nil, nil)
-	ip4Consensus.UseIPProtocol(4)
+	_ = ip4Consensus.UseIPProtocol(4)
 	if ip, err := ip4Consensus.ExternalIP(); err == nil {
 		return ip, nil
 	}
 
 	// Try IPv6 as fallback
 	ip6Consensus := externalip.DefaultConsensus(nil, nil)
-	ip6Consensus.UseIPProtocol(6)
+	_ = ip6Consensus.UseIPProtocol(6)
 	return ip6Consensus.ExternalIP()
 }
 
