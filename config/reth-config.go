@@ -18,8 +18,11 @@ type RethConfig struct {
 	// Size of Reth's Cache
 	CacheSize Parameter[uint64]
 
-	// Max number of P2P peers to connect to
-	MaxPeers Parameter[uint16]
+	// Max number of P2P peers that can connect to this node
+	MaxInboundPeers Parameter[uint16]
+
+	// Max number of P2P peers to this node can connect to
+	MaxOutboundPeers Parameter[uint16]
 
 	// The Docker Hub tag for Reth
 	ContainerTag Parameter[string]
@@ -45,11 +48,23 @@ func NewRethConfig() *RethConfig {
 			},
 		},
 
-		MaxPeers: Parameter[uint16]{
+		MaxInboundPeers: Parameter[uint16]{
 			ParameterCommon: &ParameterCommon{
-				ID:                 ids.MaxPeersID,
-				Name:               "Max Peers",
-				Description:        "The maximum number of peers Reth should connect to. This can be lowered to improve performance on low-power systems or constrained networks. We recommend keeping it at 12 or higher.",
+				ID:                 ids.RethMaxInboundPeersID,
+				Name:               "Max Inbound Peers",
+				Description:        "The maximum number of inbound peers that should be allowed to connect to Reth (peers that request to connect to your node). This can be lowered to improve performance on low-power systems or constrained networks. Inbound peers requires you to have properly forwarded ports. We recommend keeping the sum of this and max outbound peers at 12 or higher.",
+				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
+				CanBeBlank:         false,
+				OverwriteOnUpgrade: false,
+			},
+			Default: map[Network]uint16{Network_All: calculateRethPeers()},
+		},
+
+		MaxOutboundPeers: Parameter[uint16]{
+			ParameterCommon: &ParameterCommon{
+				ID:                 ids.RethMaxOutboundPeersID,
+				Name:               "Max Outbound Peers",
+				Description:        "The maximum number of outbound peers that Reth can connect to (peers that your node requests to connect to). This can be lowered to improve performance on low-power systems or constrained networks. Outbound peers do not require proper port forwarding, but are slower to accumulate than inbound peers. We recommend keeping the sum of this and max outbound peers at 12 or higher.",
 				AffectsContainers:  []ContainerID{ContainerID_ExecutionClient},
 				CanBeBlank:         false,
 				OverwriteOnUpgrade: false,
@@ -97,7 +112,8 @@ func (cfg *RethConfig) GetTitle() string {
 func (cfg *RethConfig) GetParameters() []IParameter {
 	return []IParameter{
 		&cfg.CacheSize,
-		&cfg.MaxPeers,
+		&cfg.MaxInboundPeers,
+		&cfg.MaxOutboundPeers,
 		&cfg.ContainerTag,
 		&cfg.AdditionalFlags,
 	}
@@ -132,7 +148,7 @@ func calculateRethCache() uint64 {
 // Calculate the default number of Reth peers
 func calculateRethPeers() uint16 {
 	if runtime.GOARCH == "arm64" {
-		return 25
+		return 12
 	}
-	return 50
+	return 25
 }

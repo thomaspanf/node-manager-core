@@ -200,6 +200,7 @@ func (cfg *LocalExecutionConfig) GetOpenApiPortMapping() string {
 }
 
 // Gets the max peers of the selected EC
+// Note that Reth treats the max peer count specially
 func (cfg *LocalExecutionConfig) GetMaxPeers() uint16 {
 	switch cfg.ExecutionClient.Value {
 	case ExecutionClient_Geth:
@@ -209,7 +210,7 @@ func (cfg *LocalExecutionConfig) GetMaxPeers() uint16 {
 	case ExecutionClient_Besu:
 		return cfg.Besu.MaxPeers.Value
 	case ExecutionClient_Reth:
-		return cfg.Reth.MaxPeers.Value
+		return cfg.Reth.MaxInboundPeers.Value + cfg.Reth.MaxOutboundPeers.Value
 	default:
 		panic(fmt.Sprintf("Unknown Execution Client %s", string(cfg.ExecutionClient.Value)))
 	}
