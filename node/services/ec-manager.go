@@ -274,11 +274,11 @@ func (m *ExecutionClientManager) CheckStatus(ctx context.Context) *apitypes.Clie
 	if status.FallbackEnabled {
 		status.FallbackClientStatus = checkEcStatus(ctx, m.fallbackEc)
 		// Check if fallback is using the expected network
-		if status.FallbackClientStatus.Error == "" && status.FallbackClientStatus.NetworkId != m.expectedChainID {
+		if status.FallbackClientStatus.Error == "" && status.FallbackClientStatus.ChainId != m.expectedChainID {
 			m.fallbackReady = false
 			colorReset := "\033[0m"
 			colorYellow := "\033[33m"
-			status.FallbackClientStatus.Error = fmt.Sprintf("The fallback client is using a different chain [%s%s%s, Chain ID %d] than what your node is configured for [%s, Chain ID %d]", colorYellow, getNetworkNameFromId(status.FallbackClientStatus.NetworkId), colorReset, status.FallbackClientStatus.NetworkId, getNetworkNameFromId(m.expectedChainID), m.expectedChainID)
+			status.FallbackClientStatus.Error = fmt.Sprintf("The fallback client is using a different chain [%s%s%s, Chain ID %d] than what your node is configured for [%s, Chain ID %d]", colorYellow, getNetworkNameFromId(status.FallbackClientStatus.ChainId), colorReset, status.FallbackClientStatus.ChainId, getNetworkNameFromId(m.expectedChainID), m.expectedChainID)
 			return status
 		}
 	}
@@ -303,8 +303,8 @@ func getNetworkNameFromId(networkId uint) string {
 func checkEcStatus(ctx context.Context, client *ethclient.Client) apitypes.ClientStatus {
 	status := apitypes.ClientStatus{}
 
-	// Get the NetworkId
-	networkId, err := client.NetworkID(ctx)
+	// Get the Chain ID
+	chainId, err := client.ChainID(ctx)
 	if err != nil {
 		status.Error = fmt.Sprintf("Sync progress check failed with [%s]", err.Error())
 		status.IsSynced = false
@@ -312,8 +312,8 @@ func checkEcStatus(ctx context.Context, client *ethclient.Client) apitypes.Clien
 		return status
 	}
 
-	if networkId != nil {
-		status.NetworkId = uint(networkId.Uint64())
+	if chainId != nil {
+		status.ChainId = uint(chainId.Uint64())
 	}
 
 	// Get the fallback's sync progress
