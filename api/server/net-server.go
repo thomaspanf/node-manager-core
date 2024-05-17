@@ -40,7 +40,6 @@ func NewNetworkSocketApiServer(logger *slog.Logger, ip string, port uint16, hand
 	}
 
 	// Register each route
-	//router.GetRoute().Host()
 	nmcRouter := router.PathPrefix("/" + baseRoute + "/api/v" + apiVersion).Subrouter()
 	for _, handler := range server.handlers {
 		handler.RegisterRoutes(nmcRouter)
