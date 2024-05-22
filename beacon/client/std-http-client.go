@@ -440,7 +440,7 @@ func (c *StandardHttpClient) GetDomainData(ctx context.Context, domainType []byt
 func (c *StandardHttpClient) ExitValidator(ctx context.Context, validatorIndex string, epoch uint64, signature beacon.ValidatorSignature) error {
 	return c.postVoluntaryExit(ctx, VoluntaryExitRequest{
 		Message: VoluntaryExitMessage{
-			Epoch:          uinteger(epoch),
+			Epoch:          Uinteger(epoch),
 			ValidatorIndex: validatorIndex,
 		},
 		Signature: signature[:],
