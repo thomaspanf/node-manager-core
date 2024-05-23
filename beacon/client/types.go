@@ -161,7 +161,7 @@ type Attestation struct {
 type Uinteger uint64
 
 func (i Uinteger) MarshalJSON() ([]byte, error) {
-	return json.Marshal(strconv.Itoa(int(i)))
+	return json.Marshal(strconv.FormatUint(uint64(i), 10))
 }
 func (i *Uinteger) UnmarshalJSON(data []byte) error {
 
