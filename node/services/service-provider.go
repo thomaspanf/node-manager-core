@@ -9,7 +9,6 @@ import (
 
 	dclient "github.com/docker/docker/client"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/rocket-pool/node-manager-core/beacon"
 	"github.com/rocket-pool/node-manager-core/beacon/client"
 	"github.com/rocket-pool/node-manager-core/config"
 	"github.com/rocket-pool/node-manager-core/eth"
@@ -29,7 +28,7 @@ type ServiceProvider struct {
 	nodeWallet *wallet.Wallet
 	ecManager  *ExecutionClientManager
 	bcManager  *BeaconClientManager
-	docker     *dclient.Client
+	docker     dclient.APIClient
 	txMgr      *eth.TransactionManager
 	queryMgr   *eth.QueryManager
 
@@ -42,8 +41,10 @@ type ServiceProvider struct {
 	tasksLogger *log.Logger
 }
 
-// Creates a new ServiceProvider instance
+// Creates a new ServiceProvider instance based on the given config
 func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration) (*ServiceProvider, error) {
+	resources := cfg.GetNetworkResources()
+
 	// EC Manager
 	var fallbackEc *ethclient.Client
 	primaryEcUrl, fallbackEcUrl := cfg.GetExecutionClientUrls()
@@ -58,6 +59,10 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration) (*Servi
 			return nil, fmt.Errorf("error connecting to fallback EC at [%s]: %w", fallbackEcUrl, err)
 		}
 	}
+	ecManager, err := NewExecutionClientManager(primaryEc, fallbackEc, resources.ChainID, clientTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("error creating executon client manager: %w", err)
+	}
 
 	// Beacon manager
 	primaryBnUrl, fallbackBnUrl := cfg.GetBeaconNodeUrls()
@@ -66,12 +71,22 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration) (*Servi
 	if fallbackBnUrl != "" {
 		fallbackBc = client.NewStandardHttpClient(fallbackBnUrl, clientTimeout)
 	}
+	bcManager, err := NewBeaconClientManager(primaryBc, fallbackBc, resources.ChainID, clientTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("error creating Beacon client manager: %w", err)
+	}
 
-	return NewServiceProviderFromClients(cfg, primaryEc, fallbackEc, primaryBc, fallbackBc, clientTimeout)
+	// Docker client
+	dockerClient, err := dclient.NewClientWithOpts(dclient.WithVersion(DockerApiVersion))
+	if err != nil {
+		return nil, fmt.Errorf("error creating Docker client: %w", err)
+	}
+
+	return NewServiceProviderWithCustomServices(cfg, resources, ecManager, bcManager, dockerClient)
 }
 
-// Creates a new ServiceProvider instance with the given clients
-func NewServiceProviderFromClients(cfg config.IConfig, primaryEc eth.IExecutionClient, fallbackEc eth.IExecutionClient, primaryBn beacon.IBeaconClient, fallbackBn beacon.IBeaconClient, clientTimeout time.Duration) (*ServiceProvider, error) {
+// Creates a new ServiceProvider instance with custom services instead of creating them from the config
+func NewServiceProviderWithCustomServices(cfg config.IConfig, resources *config.NetworkResources, ecManager *ExecutionClientManager, bcManager *BeaconClientManager, dockerClient dclient.APIClient) (*ServiceProvider, error) {
 	// Make the API logger
 	loggerOpts := cfg.GetLoggerOptions()
 	apiLogger, err := log.NewLogger(cfg.GetApiLogFilePath(), loggerOpts)
@@ -86,31 +101,12 @@ func NewServiceProviderFromClients(cfg config.IConfig, primaryEc eth.IExecutionC
 	}
 
 	// Wallet
-	resources := cfg.GetNetworkResources()
 	nodeAddressPath := filepath.Join(cfg.GetNodeAddressFilePath())
 	walletDataPath := filepath.Join(cfg.GetWalletFilePath())
 	passwordPath := filepath.Join(cfg.GetPasswordFilePath())
 	nodeWallet, err := wallet.NewWallet(tasksLogger.Logger, walletDataPath, nodeAddressPath, passwordPath, resources.ChainID)
 	if err != nil {
 		return nil, fmt.Errorf("error creating node wallet: %w", err)
-	}
-
-	// EC Manager
-	ecManager, err := NewExecutionClientManager(primaryEc, fallbackEc, resources.ChainID, clientTimeout)
-	if err != nil {
-		return nil, fmt.Errorf("error creating executon client manager: %w", err)
-	}
-
-	// Beacon manager
-	bcManager, err := NewBeaconClientManager(primaryBn, fallbackBn, resources.ChainID, clientTimeout)
-	if err != nil {
-		return nil, fmt.Errorf("error creating Beacon client manager: %w", err)
-	}
-
-	// Docker client
-	dockerClient, err := dclient.NewClientWithOpts(dclient.WithVersion(DockerApiVersion))
-	if err != nil {
-		return nil, fmt.Errorf("error creating Docker client: %w", err)
 	}
 
 	// TX Manager
@@ -120,7 +116,7 @@ func NewServiceProviderFromClients(cfg config.IConfig, primaryEc eth.IExecutionC
 	}
 
 	// Query Manager - set the default concurrent run limit to half the CPUs so the EC doesn't get overwhelmed
-	concurrentCallLimit := runtime.NumCPU()
+	concurrentCallLimit := runtime.NumCPU() / 2
 	if concurrentCallLimit < 1 {
 		concurrentCallLimit = 1
 	}
@@ -181,7 +177,7 @@ func (p *ServiceProvider) GetBeaconClient() *BeaconClientManager {
 	return p.bcManager
 }
 
-func (p *ServiceProvider) GetDocker() *dclient.Client {
+func (p *ServiceProvider) GetDocker() dclient.APIClient {
 	return p.docker
 }
 
