@@ -57,6 +57,11 @@ func (s *NetworkSocketApiServer) Start(wg *sync.WaitGroup) error {
 	}
 	s.socket = socket
 
+	// Get the port if random
+	if s.port == 0 {
+		s.port = uint16(socket.Addr().(*net.TCPAddr).Port)
+	}
+
 	// Start listening
 	wg.Add(1)
 	go func() {
@@ -77,4 +82,9 @@ func (s *NetworkSocketApiServer) Stop() error {
 		return fmt.Errorf("error stopping listener: %w", err)
 	}
 	return nil
+}
+
+// Get the port the server is running on - useful if the port was automatically assigned
+func (s *NetworkSocketApiServer) GetPort() uint16 {
+	return s.port
 }
