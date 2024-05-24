@@ -102,4 +102,11 @@ type IExecutionClient interface {
 	// SyncProgress retrieves the current progress of the sync algorithm. If there's
 	// no sync currently running, it returns nil.
 	SyncProgress(ctx context.Context) (*ethereum.SyncProgress, error)
+
+	/// =======================
+	/// ChainIDReader functions
+	/// =======================
+
+	// Get the client's chain ID.
+	ChainID(ctx context.Context) (*big.Int, error)
 }
