@@ -187,10 +187,10 @@ func (p *BeaconHttpProvider) Beacon_Header(ctx context.Context, blockId string) 
 	return beaconBlock, true, nil
 }
 
-func (p *BeaconHttpProvider) Beacon_Validators(ctx context.Context, stateId string, pubkeys []string) (ValidatorsResponse, error) {
+func (p *BeaconHttpProvider) Beacon_Validators(ctx context.Context, stateId string, ids []string) (ValidatorsResponse, error) {
 	var query string
-	if len(pubkeys) > 0 {
-		query = fmt.Sprintf("?id=%s", strings.Join(pubkeys, ","))
+	if len(ids) > 0 {
+		query = fmt.Sprintf("?id=%s", strings.Join(ids, ","))
 	}
 	responseBody, status, err := p.getRequestWithoutTimeout(ctx, fmt.Sprintf(RequestValidatorsPath, stateId)+query)
 	if err != nil {

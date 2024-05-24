@@ -10,7 +10,7 @@ type IBeaconApiProvider interface {
 	Beacon_FinalityCheckpoints(ctx context.Context, stateId string) (FinalityCheckpointsResponse, error)
 	Beacon_Genesis(ctx context.Context) (GenesisResponse, error)
 	Beacon_Header(ctx context.Context, blockId string) (BeaconBlockHeaderResponse, bool, error)
-	Beacon_Validators(ctx context.Context, stateId string, pubkeys []string) (ValidatorsResponse, error)
+	Beacon_Validators(ctx context.Context, stateId string, ids []string) (ValidatorsResponse, error)
 	Beacon_VoluntaryExits_Post(ctx context.Context, request VoluntaryExitRequest) error
 	Config_DepositContract(ctx context.Context) (Eth2DepositContractResponse, error)
 	Config_Spec(ctx context.Context) (Eth2ConfigResponse, error)
