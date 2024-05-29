@@ -17,17 +17,30 @@ type BeaconClientManager struct {
 	primaryReady    bool
 	fallbackReady   bool
 	expectedChainID uint
+	fallbackEnabled bool
 }
 
 // Creates a new BeaconClientManager instance
-func NewBeaconClientManager(primaryBc beacon.IBeaconClient, fallbackBc beacon.IBeaconClient, chainID uint, clientTimeout time.Duration) (*BeaconClientManager, error) {
+func NewBeaconClientManager(primaryBc beacon.IBeaconClient, chainID uint, clientTimeout time.Duration) *BeaconClientManager {
+	return &BeaconClientManager{
+		primaryBc:       primaryBc,
+		primaryReady:    true,
+		fallbackReady:   false,
+		expectedChainID: chainID,
+		fallbackEnabled: false,
+	}
+}
+
+// Creates a new BeaconClientManager instance with a fallback client
+func NewBeaconClientManagerWithFallback(primaryBc beacon.IBeaconClient, fallbackBc beacon.IBeaconClient, chainID uint, clientTimeout time.Duration) *BeaconClientManager {
 	return &BeaconClientManager{
 		primaryBc:       primaryBc,
 		fallbackBc:      fallbackBc,
 		primaryReady:    true,
-		fallbackReady:   fallbackBc != nil,
+		fallbackReady:   true,
 		expectedChainID: chainID,
-	}, nil
+		fallbackEnabled: true,
+	}
 }
 
 /// ========================
@@ -210,7 +223,7 @@ func (m *BeaconClientManager) ChangeWithdrawalCredentials(ctx context.Context, v
 // Get the status of the primary and fallback clients
 func (m *BeaconClientManager) CheckStatus(ctx context.Context, checkChainIDs bool) *types.ClientManagerStatus {
 	status := &types.ClientManagerStatus{
-		FallbackEnabled: m.fallbackBc != nil,
+		FallbackEnabled: m.fallbackEnabled,
 	}
 
 	// Get the primary BC status

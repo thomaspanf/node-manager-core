@@ -22,18 +22,32 @@ type ExecutionClientManager struct {
 	fallbackReady   bool
 	expectedChainID uint
 	timeout         time.Duration
+	fallbackEnabled bool
 }
 
 // Creates a new ExecutionClientManager instance
-func NewExecutionClientManager(primaryEc eth.IExecutionClient, fallbackEc eth.IExecutionClient, chainID uint, clientTimeout time.Duration) (*ExecutionClientManager, error) {
+func NewExecutionClientManager(primaryEc eth.IExecutionClient, chainID uint, clientTimeout time.Duration) *ExecutionClientManager {
+	return &ExecutionClientManager{
+		primaryEc:       primaryEc,
+		primaryReady:    true,
+		fallbackReady:   false,
+		expectedChainID: chainID,
+		timeout:         clientTimeout,
+		fallbackEnabled: false,
+	}
+}
+
+// Creates a new ExecutionClientManager instance that includes a fallback client
+func NewExecutionClientManagerWithFallback(primaryEc eth.IExecutionClient, fallbackEc eth.IExecutionClient, chainID uint, clientTimeout time.Duration) *ExecutionClientManager {
 	return &ExecutionClientManager{
 		primaryEc:       primaryEc,
 		fallbackEc:      fallbackEc,
 		primaryReady:    true,
-		fallbackReady:   fallbackEc != nil,
+		fallbackReady:   true,
 		expectedChainID: chainID,
 		timeout:         clientTimeout,
-	}, nil
+		fallbackEnabled: true,
+	}
 }
 
 /// ========================
@@ -252,7 +266,7 @@ func (m *ExecutionClientManager) ChainID(ctx context.Context) (*big.Int, error) 
 // Get the status of the primary and fallback clients
 func (m *ExecutionClientManager) CheckStatus(ctx context.Context, checkChainIDs bool) *apitypes.ClientManagerStatus {
 	status := &apitypes.ClientManagerStatus{
-		FallbackEnabled: m.fallbackEc != nil,
+		FallbackEnabled: m.fallbackEnabled,
 	}
 
 	// Get the primary EC status

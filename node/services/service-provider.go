@@ -46,7 +46,7 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration) (*Servi
 	resources := cfg.GetNetworkResources()
 
 	// EC Manager
-	var fallbackEc *ethclient.Client
+	var ecManager *ExecutionClientManager
 	primaryEcUrl, fallbackEcUrl := cfg.GetExecutionClientUrls()
 	primaryEc, err := ethclient.Dial(primaryEcUrl)
 	if err != nil {
@@ -54,26 +54,24 @@ func NewServiceProvider(cfg config.IConfig, clientTimeout time.Duration) (*Servi
 	}
 	if fallbackEcUrl != "" {
 		// Get the fallback EC url, if applicable
-		fallbackEc, err = ethclient.Dial(fallbackEcUrl)
+		fallbackEc, err := ethclient.Dial(fallbackEcUrl)
 		if err != nil {
 			return nil, fmt.Errorf("error connecting to fallback EC at [%s]: %w", fallbackEcUrl, err)
 		}
-	}
-	ecManager, err := NewExecutionClientManager(primaryEc, fallbackEc, resources.ChainID, clientTimeout)
-	if err != nil {
-		return nil, fmt.Errorf("error creating executon client manager: %w", err)
+		ecManager = NewExecutionClientManagerWithFallback(primaryEc, fallbackEc, resources.ChainID, clientTimeout)
+	} else {
+		ecManager = NewExecutionClientManager(primaryEc, resources.ChainID, clientTimeout)
 	}
 
 	// Beacon manager
+	var bcManager *BeaconClientManager
 	primaryBnUrl, fallbackBnUrl := cfg.GetBeaconNodeUrls()
 	primaryBc := client.NewStandardHttpClient(primaryBnUrl, clientTimeout)
-	var fallbackBc *client.StandardHttpClient
 	if fallbackBnUrl != "" {
-		fallbackBc = client.NewStandardHttpClient(fallbackBnUrl, clientTimeout)
-	}
-	bcManager, err := NewBeaconClientManager(primaryBc, fallbackBc, resources.ChainID, clientTimeout)
-	if err != nil {
-		return nil, fmt.Errorf("error creating Beacon client manager: %w", err)
+		fallbackBc := client.NewStandardHttpClient(fallbackBnUrl, clientTimeout)
+		bcManager = NewBeaconClientManagerWithFallback(primaryBc, fallbackBc, resources.ChainID, clientTimeout)
+	} else {
+		bcManager = NewBeaconClientManager(primaryBc, resources.ChainID, clientTimeout)
 	}
 
 	// Docker client
