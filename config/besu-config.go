@@ -7,8 +7,8 @@ import (
 // Constants
 const (
 	// Tags
-	besuTagTest string = "hyperledger/besu:24.5.1"
-	besuTagProd string = "hyperledger/besu:24.5.1"
+	besuTagTest string = "hyperledger/besu:24.5.2"
+	besuTagProd string = "hyperledger/besu:24.5.2"
 )
 
 // Configuration for Besu
