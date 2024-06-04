@@ -10,49 +10,44 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
 	apitypes "github.com/rocket-pool/node-manager-core/api/types"
 	"github.com/rocket-pool/node-manager-core/eth"
 )
 
 // This is a proxy for multiple ETH clients, providing natural fallback support if one of them fails.
 type ExecutionClientManager struct {
-	primaryEcUrl    string
-	fallbackEcUrl   string
-	primaryEc       *ethclient.Client
-	fallbackEc      *ethclient.Client
+	primaryEc       eth.IExecutionClient
+	fallbackEc      eth.IExecutionClient
 	primaryReady    bool
 	fallbackReady   bool
 	expectedChainID uint
 	timeout         time.Duration
+	fallbackEnabled bool
 }
 
 // Creates a new ExecutionClientManager instance
-func NewExecutionClientManager(primaryEcUrl string, fallbackEcUrl string, chainID uint, clientTimeout time.Duration) (*ExecutionClientManager, error) {
-	primaryEc, err := ethclient.Dial(primaryEcUrl)
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to primary EC at [%s]: %w", primaryEcUrl, err)
-	}
-
-	// Get the fallback EC url, if applicable
-	var fallbackEc *ethclient.Client
-	if fallbackEcUrl != "" {
-		fallbackEc, err = ethclient.Dial(fallbackEcUrl)
-		if err != nil {
-			return nil, fmt.Errorf("error connecting to fallback EC at [%s]: %w", fallbackEcUrl, err)
-		}
-	}
-
+func NewExecutionClientManager(primaryEc eth.IExecutionClient, chainID uint, clientTimeout time.Duration) *ExecutionClientManager {
 	return &ExecutionClientManager{
-		primaryEcUrl:    primaryEcUrl,
-		fallbackEcUrl:   fallbackEcUrl,
+		primaryEc:       primaryEc,
+		primaryReady:    true,
+		fallbackReady:   false,
+		expectedChainID: chainID,
+		timeout:         clientTimeout,
+		fallbackEnabled: false,
+	}
+}
+
+// Creates a new ExecutionClientManager instance that includes a fallback client
+func NewExecutionClientManagerWithFallback(primaryEc eth.IExecutionClient, fallbackEc eth.IExecutionClient, chainID uint, clientTimeout time.Duration) *ExecutionClientManager {
+	return &ExecutionClientManager{
 		primaryEc:       primaryEc,
 		fallbackEc:      fallbackEc,
 		primaryReady:    true,
-		fallbackReady:   fallbackEc != nil,
+		fallbackReady:   true,
 		expectedChainID: chainID,
 		timeout:         clientTimeout,
-	}, nil
+		fallbackEnabled: true,
+	}
 }
 
 /// ========================
@@ -254,6 +249,16 @@ func (m *ExecutionClientManager) SyncProgress(ctx context.Context) (*ethereum.Sy
 	})
 }
 
+/// =======================
+/// ChainIDReader Functions
+/// =======================
+
+func (m *ExecutionClientManager) ChainID(ctx context.Context) (*big.Int, error) {
+	return runFunction1(m, ctx, func(client eth.IExecutionClient) (*big.Int, error) {
+		return client.ChainID(ctx)
+	})
+}
+
 /// =================
 /// Manager Functions
 /// =================
@@ -261,7 +266,7 @@ func (m *ExecutionClientManager) SyncProgress(ctx context.Context) (*ethereum.Sy
 // Get the status of the primary and fallback clients
 func (m *ExecutionClientManager) CheckStatus(ctx context.Context, checkChainIDs bool) *apitypes.ClientManagerStatus {
 	status := &apitypes.ClientManagerStatus{
-		FallbackEnabled: m.fallbackEc != nil,
+		FallbackEnabled: m.fallbackEnabled,
 	}
 
 	// Get the primary EC status
@@ -293,7 +298,7 @@ func (m *ExecutionClientManager) CheckStatus(ctx context.Context, checkChainIDs 
 }
 
 // Check the client status
-func checkEcStatus(ctx context.Context, client *ethclient.Client, checkChainIDs bool) apitypes.ClientStatus {
+func checkEcStatus(ctx context.Context, client eth.IExecutionClient, checkChainIDs bool) apitypes.ClientStatus {
 	status := apitypes.ClientStatus{}
 
 	if checkChainIDs {

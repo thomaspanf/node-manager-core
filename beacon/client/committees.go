@@ -8,8 +8,8 @@ import (
 )
 
 type Committee struct {
-	Index      uinteger `json:"index"`
-	Slot       uinteger `json:"slot"`
+	Index      Uinteger `json:"index"`
+	Slot       Uinteger `json:"slot"`
 	Validators []string `json:"validators"`
 }
 
