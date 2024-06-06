@@ -29,6 +29,31 @@ func ValidateArg[ArgType any](name string, args url.Values, impl ArgValidator[Ar
 	return nil
 }
 
+// Validates an optional argument, converting to the required type if it exists
+func ValidateOptionalArg[ArgType any](name string, args url.Values, impl ArgValidator[ArgType], result_Out *ArgType, exists_Out *bool) error {
+	// Make sure it exists
+	arg, exists := args[name]
+	if !exists {
+		if exists_Out != nil {
+			*exists_Out = false
+		}
+		return nil
+	}
+
+	// Run the parser
+	result, err := impl(name, arg[0])
+	if err != nil {
+		return err
+	}
+
+	// Set the result
+	*result_Out = result
+	if exists_Out != nil {
+		*exists_Out = true
+	}
+	return nil
+}
+
 // Validates an argument representing a batch of inputs, ensuring it exists and the inputs can be converted to the required type.
 // Use a limit of 0 for no limit.
 func ValidateArgBatch[ArgType any](name string, args url.Values, batchLimit int, impl ArgValidator[ArgType], result_Out *[]ArgType) error {
@@ -54,8 +79,9 @@ func ValidateArgBatch[ArgType any](name string, args url.Values, batchLimit int,
 	return nil
 }
 
-// Validates an optional argument, converting to the required type if it exists
-func ValidateOptionalArg[ArgType any](name string, args url.Values, impl ArgValidator[ArgType], result_Out *ArgType, exists_Out *bool) error {
+// Validates an optional argument representing a batch of inputs, converting them to the required type if it exists.
+// Use a limit of 0 for no limit.
+func ValidateOptionalArgBatch[ArgType any](name string, args url.Values, batchLimit int, impl ArgValidator[ArgType], result_Out *[]ArgType, exists_Out *bool) error {
 	// Make sure it exists
 	arg, exists := args[name]
 	if !exists {
@@ -66,9 +92,14 @@ func ValidateOptionalArg[ArgType any](name string, args url.Values, impl ArgVali
 	}
 
 	// Run the parser
-	result, err := impl(name, arg[0])
+	result, err := input.ValidateBatch[ArgType](name, arg[0], impl)
 	if err != nil {
 		return err
+	}
+
+	// Make sure there aren't too many entries
+	if batchLimit > 0 && len(result) > batchLimit {
+		return fmt.Errorf("too many inputs in arg %s (provided %d, max = %d)", name, len(result), batchLimit)
 	}
 
 	// Set the result
