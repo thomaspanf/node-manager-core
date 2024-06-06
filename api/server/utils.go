@@ -29,7 +29,8 @@ func ValidateArg[ArgType any](name string, args url.Values, impl ArgValidator[Ar
 	return nil
 }
 
-// Validates an argument representing a batch of inputs, ensuring it exists and the inputs can be converted to the required type
+// Validates an argument representing a batch of inputs, ensuring it exists and the inputs can be converted to the required type.
+// Use a limit of 0 for no limit.
 func ValidateArgBatch[ArgType any](name string, args url.Values, batchLimit int, impl ArgValidator[ArgType], result_Out *[]ArgType) error {
 	// Make sure it exists
 	arg, exists := args[name]
@@ -44,7 +45,7 @@ func ValidateArgBatch[ArgType any](name string, args url.Values, batchLimit int,
 	}
 
 	// Make sure there aren't too many entries
-	if len(result) > batchLimit {
+	if batchLimit > 0 && len(result) > batchLimit {
 		return fmt.Errorf("too many inputs in arg %s (provided %d, max = %d)", name, len(result), batchLimit)
 	}
 
