@@ -113,6 +113,8 @@ func (w *Wallet) Reload(logger *slog.Logger) error {
 		} else if walletMgr != nil {
 			w.walletManager = walletMgr
 		}
+	} else {
+		w.walletManager = nil
 	}
 
 	// Load the node address
