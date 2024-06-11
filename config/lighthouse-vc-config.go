@@ -2,15 +2,12 @@ package config
 
 import (
 	"github.com/rocket-pool/node-manager-core/config/ids"
-	"github.com/rocket-pool/node-manager-core/utils/sys"
 )
 
 const (
 	// Tags
-	lighthouseVcTagPortableTest string = lighthouseBnTagPortableTest
-	lighthouseVcTagPortableProd string = lighthouseBnTagPortableProd
-	lighthouseVcTagModernTest   string = lighthouseBnTagModernTest
-	lighthouseVcTagModernProd   string = lighthouseBnTagModernProd
+	lighthouseVcTagProd string = lighthouseBnTagProd
+	lighthouseVcTagTest string = lighthouseBnTagTest
 )
 
 // Configuration for the Lighthouse VC
@@ -35,8 +32,8 @@ func NewLighthouseVcConfig() *LighthouseVcConfig {
 				OverwriteOnUpgrade: true,
 			},
 			Default: map[Network]string{
-				Network_Mainnet: getLighthouseVcTagProd(),
-				Network_Holesky: getLighthouseVcTagTest(),
+				Network_Mainnet: lighthouseVcTagProd,
+				Network_Holesky: lighthouseVcTagTest,
 			},
 		},
 
@@ -72,22 +69,4 @@ func (cfg *LighthouseVcConfig) GetParameters() []IParameter {
 // Get the sections underneath this one
 func (cfg *LighthouseVcConfig) GetSubconfigs() map[string]IConfigSection {
 	return map[string]IConfigSection{}
-}
-
-// Get the appropriate LH default tag for production
-func getLighthouseVcTagProd() string {
-	missingFeatures := sys.GetMissingModernCpuFeatures()
-	if len(missingFeatures) > 0 {
-		return lighthouseVcTagPortableProd
-	}
-	return lighthouseVcTagModernProd
-}
-
-// Get the appropriate LH default tag for testnets
-func getLighthouseVcTagTest() string {
-	missingFeatures := sys.GetMissingModernCpuFeatures()
-	if len(missingFeatures) > 0 {
-		return lighthouseVcTagPortableTest
-	}
-	return lighthouseVcTagModernTest
 }
