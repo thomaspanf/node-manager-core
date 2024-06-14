@@ -17,7 +17,7 @@ type Logger struct {
 	path    string
 }
 
-// Creates a new logger
+// Creates a new logger that writes out to a log file on disk.
 func NewLogger(logFilePath string, options LoggerOptions) (*Logger, error) {
 	// Make the file
 	err := os.MkdirAll(filepath.Dir(logFilePath), logDirMode)
@@ -58,6 +58,14 @@ func NewLogger(logFilePath string, options LoggerOptions) (*Logger, error) {
 	}, nil
 }
 
+// Creates a new logger that uses the slog default logger, which writes to the terminal instead of a file.
+// Operations like rotation don't apply to this logger.
+func NewDefaultLogger() *Logger {
+	return &Logger{
+		Logger: slog.Default(),
+	}
+}
+
 // Get the path of the file this logger is writing to
 func (l *Logger) GetFilePath() string {
 	return l.path
@@ -65,7 +73,10 @@ func (l *Logger) GetFilePath() string {
 
 // Rotate the log file, migrating the current file to an old backup and starting a new one
 func (l *Logger) Rotate() error {
-	return l.logFile.Rotate()
+	if l.logFile != nil {
+		return l.logFile.Rotate()
+	}
+	return nil
 }
 
 // Closes the log file
