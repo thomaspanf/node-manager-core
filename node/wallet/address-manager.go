@@ -29,6 +29,9 @@ func newAddressManager(path string) *addressManager {
 
 // Gets the address saved on disk. Returns false if the address file doesn't exist.
 func (m *addressManager) LoadAddress() (common.Address, bool, error) {
+	m.address = common.Address{}
+	m.isLoaded = false
+
 	_, err := os.Stat(m.path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return common.Address{}, false, nil

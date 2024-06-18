@@ -2,15 +2,12 @@ package config
 
 import (
 	"github.com/rocket-pool/node-manager-core/config/ids"
-	"github.com/rocket-pool/node-manager-core/utils/sys"
 )
 
 const (
 	// Tags
-	lighthouseBnTagPortableTest string = "sigp/lighthouse:v5.1.3"
-	lighthouseBnTagPortableProd string = "sigp/lighthouse:v5.1.3"
-	lighthouseBnTagModernTest   string = "sigp/lighthouse:v5.1.3-modern"
-	lighthouseBnTagModernProd   string = "sigp/lighthouse:v5.1.3-modern"
+	lighthouseBnTagProd string = "sigp/lighthouse:v5.2.0"
+	lighthouseBnTagTest string = "sigp/lighthouse:v5.2.0"
 )
 
 // Configuration for the Lighthouse BN
@@ -69,8 +66,8 @@ func NewLighthouseBnConfig() *LighthouseBnConfig {
 				OverwriteOnUpgrade: true,
 			},
 			Default: map[Network]string{
-				Network_Mainnet: getLighthouseBnTagProd(),
-				Network_Holesky: getLighthouseBnTagTest(),
+				Network_Mainnet: lighthouseBnTagProd,
+				Network_Holesky: lighthouseBnTagTest,
 			},
 		},
 
@@ -108,22 +105,4 @@ func (cfg *LighthouseBnConfig) GetParameters() []IParameter {
 // Get the sections underneath this one
 func (cfg *LighthouseBnConfig) GetSubconfigs() map[string]IConfigSection {
 	return map[string]IConfigSection{}
-}
-
-// Get the appropriate LH default tag for production
-func getLighthouseBnTagProd() string {
-	missingFeatures := sys.GetMissingModernCpuFeatures()
-	if len(missingFeatures) > 0 {
-		return lighthouseBnTagPortableProd
-	}
-	return lighthouseBnTagModernProd
-}
-
-// Get the appropriate LH default tag for testnets
-func getLighthouseBnTagTest() string {
-	missingFeatures := sys.GetMissingModernCpuFeatures()
-	if len(missingFeatures) > 0 {
-		return lighthouseBnTagPortableTest
-	}
-	return lighthouseBnTagModernTest
 }
