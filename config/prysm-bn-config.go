@@ -6,8 +6,8 @@ import (
 
 const (
 	// Tags
-	prysmBnTagTest string = "rocketpool/prysm:v5.0.3"
-	prysmBnTagProd string = "rocketpool/prysm:v5.0.3"
+	prysmBnTagTest string = "rocketpool/prysm:v5.0.4"
+	prysmBnTagProd string = "rocketpool/prysm:v5.0.4"
 )
 
 // Configuration for the Prysm BN

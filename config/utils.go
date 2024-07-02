@@ -2,6 +2,7 @@ package config
 
 import (
 	"net"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	externalip "github.com/glendc/go-external-ip"
@@ -39,9 +40,12 @@ func GetPortModes(warningOverride string) []*ParameterOption[RpcPortMode] {
 // Get the external IP address. Try finding an IPv4 address first to:
 // * Improve peer discovery and node performance
 // * Avoid unnecessary container restarts caused by switching between IPv4 and IPv6
-func GetExternalIP() (net.IP, error) {
+// Timeout is how long each request can run for before failing.
+func GetExternalIP(timeout time.Duration) (net.IP, error) {
 	// Try IPv4 first
-	ip4Consensus := externalip.DefaultConsensus(nil, nil)
+	ip4Consensus := externalip.DefaultConsensus(&externalip.ConsensusConfig{
+		Timeout: timeout,
+	}, nil)
 	_ = ip4Consensus.UseIPProtocol(4)
 	if ip, err := ip4Consensus.ExternalIP(); err == nil {
 		return ip, nil

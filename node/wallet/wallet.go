@@ -25,6 +25,27 @@ const (
 	FileMode    = 0600
 )
 
+// Errors
+var (
+	// Attempted to do an operation requiring a wallet, but it's not loaded
+	ErrWalletNotLoaded = errors.New("wallet is not loaded")
+
+	// Attempted to load a wallet keystore, but it's already loaded
+	ErrWalletAlreadyLoaded = errors.New("wallet is already loaded, nothing to do")
+
+	// Attempted to create a new wallet, but one is already present
+	ErrKeystoreAlreadyPresent = errors.New("wallet keystore is already present - please delete it before creating a new wallet")
+
+	// Attempted to load a keystore, but it's not on disk
+	ErrKeystoreNotPresent = errors.New("keystore not present, wallet must be initialized or recovered first")
+
+	// Attempted to do an operation that is not supported by the loaded wallet type
+	ErrNotSupported = errors.New("loaded wallet type does not support this operation")
+
+	// Provided password is not correct to unlock the wallet keystore
+	ErrInvalidPassword = errors.New("provided password is not correct for the loaded wallet")
+)
+
 // Wallet
 type Wallet struct {
 	// Managers
@@ -139,7 +160,7 @@ func (w *Wallet) GetTransactor() (*bind.TransactOpts, error) {
 	defer w.lock.Unlock()
 
 	if w.walletManager == nil {
-		return nil, fmt.Errorf("wallet is not loaded")
+		return nil, ErrWalletNotLoaded
 	}
 
 	opts, err := w.walletManager.GetTransactor()
@@ -180,7 +201,7 @@ func (w *Wallet) SignMessage(message []byte) ([]byte, error) {
 	defer w.lock.Unlock()
 
 	if w.walletManager == nil {
-		return nil, fmt.Errorf("wallet is not loaded")
+		return nil, ErrWalletNotLoaded
 	}
 	return w.walletManager.SignMessage(message)
 }
@@ -191,7 +212,7 @@ func (w *Wallet) SignTransaction(serializedTx []byte) ([]byte, error) {
 	defer w.lock.Unlock()
 
 	if w.walletManager == nil {
-		return nil, fmt.Errorf("wallet is not loaded")
+		return nil, ErrWalletNotLoaded
 	}
 	return w.walletManager.SignTransaction(serializedTx)
 }
@@ -210,7 +231,7 @@ func (w *Wallet) RestoreAddressToWallet() error {
 	defer w.lock.Unlock()
 
 	if w.addressManager == nil {
-		return fmt.Errorf("wallet is not loaded")
+		return ErrWalletNotLoaded
 	}
 
 	walletAddress, err := w.walletManager.GetAddress()
@@ -227,7 +248,7 @@ func (w *Wallet) CreateNewLocalWallet(derivationPath string, walletIndex uint, p
 	defer w.lock.Unlock()
 
 	if w.walletManager != nil {
-		return "", fmt.Errorf("wallet keystore is already present - please delete it before creating a new wallet")
+		return "", ErrKeystoreAlreadyPresent
 	}
 
 	// Make a mnemonic
@@ -250,7 +271,7 @@ func (w *Wallet) Recover(derivationPath string, walletIndex uint, mnemonic strin
 	defer w.lock.Unlock()
 
 	if w.walletManager != nil {
-		return fmt.Errorf("wallet keystore is already present - please delete it before recovering an existing wallet")
+		return ErrKeystoreAlreadyPresent
 	}
 
 	// Check the mnemonic
@@ -268,7 +289,7 @@ func (w *Wallet) SetPassword(password string, save bool) error {
 
 	if w.walletManager != nil {
 		if !save {
-			return fmt.Errorf("wallet is already loaded, nothing to do")
+			return ErrWalletAlreadyLoaded
 		}
 
 		switch w.walletManager.GetType() {
@@ -280,13 +301,13 @@ func (w *Wallet) SetPassword(password string, save bool) error {
 				return fmt.Errorf("error setting password: %w", err)
 			}
 			if !isValid {
-				return fmt.Errorf("provided password is not correct for the loaded wallet")
+				return ErrInvalidPassword
 			}
 
 			// Save and exit
 			return w.passwordManager.SavePassword(password)
 		default:
-			return fmt.Errorf("loaded wallet is not local and does not use a password")
+			return ErrNotSupported
 		}
 	}
 
@@ -296,7 +317,7 @@ func (w *Wallet) SetPassword(password string, save bool) error {
 		return fmt.Errorf("error checking if wallet data is on disk: %w", err)
 	}
 	if !isWalletOnDisk {
-		return fmt.Errorf("keystore not present, wallet must be initialized or recovered first")
+		return ErrKeystoreNotPresent
 	}
 	mgr, err := w.loadWalletData(password)
 	if err != nil {
@@ -342,7 +363,7 @@ func (w *Wallet) GetNodePrivateKeyBytes() ([]byte, error) {
 	defer w.lock.Unlock()
 
 	if w.walletManager == nil {
-		return nil, fmt.Errorf("wallet is not loaded")
+		return nil, ErrWalletNotLoaded
 	}
 
 	switch w.walletManager.GetType() {
@@ -350,7 +371,7 @@ func (w *Wallet) GetNodePrivateKeyBytes() ([]byte, error) {
 		localMgr := w.walletManager.(*localWalletManager)
 		return crypto.FromECDSA(localMgr.GetPrivateKey()), nil
 	default:
-		return nil, fmt.Errorf("loaded wallet is not local")
+		return nil, ErrNotSupported
 	}
 }
 
@@ -360,7 +381,7 @@ func (w *Wallet) GetEthKeystore(password string) ([]byte, error) {
 	defer w.lock.Unlock()
 
 	if w.walletManager == nil {
-		return nil, fmt.Errorf("wallet is not loaded")
+		return nil, ErrWalletNotLoaded
 	}
 
 	switch w.walletManager.GetType() {
@@ -368,7 +389,7 @@ func (w *Wallet) GetEthKeystore(password string) ([]byte, error) {
 		localMgr := w.walletManager.(*localWalletManager)
 		return localMgr.GetEthKeystore(password)
 	default:
-		return nil, fmt.Errorf("loaded wallet is not local")
+		return nil, ErrNotSupported
 	}
 }
 
@@ -378,7 +399,7 @@ func (w *Wallet) SerializeData() (string, error) {
 	defer w.lock.Unlock()
 
 	if w.walletManager == nil {
-		return "", fmt.Errorf("wallet is not loaded")
+		return "", ErrWalletNotLoaded
 	}
 	return w.walletManager.SerializeData()
 }
@@ -389,7 +410,7 @@ func (w *Wallet) GenerateValidatorKey(path string) ([]byte, error) {
 	defer w.lock.Unlock()
 
 	if w.walletManager == nil {
-		return nil, fmt.Errorf("wallet is not loaded")
+		return nil, ErrWalletNotLoaded
 	}
 
 	switch w.walletManager.GetType() {
@@ -397,7 +418,7 @@ func (w *Wallet) GenerateValidatorKey(path string) ([]byte, error) {
 		localMgr := w.walletManager.(*localWalletManager)
 		return localMgr.GenerateValidatorKey(path)
 	default:
-		return nil, fmt.Errorf("loaded wallet is not local")
+		return nil, ErrNotSupported
 	}
 }
 

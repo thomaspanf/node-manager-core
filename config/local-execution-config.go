@@ -66,8 +66,8 @@ func NewLocalExecutionConfig() *LocalExecutionConfig {
 					Value: ExecutionClient_Besu,
 				}, {
 					ParameterOptionCommon: &ParameterOptionCommon{
-						Name:        "Reth (Beta)",
-						Description: "Reth is a new Ethereum full node implementation that is focused on being user-friendly, highly modular, as well as being fast and efficient. Reth is fully open source and written in Rust.\n\n[orange]NOTE: Reth is currently in beta status. Please consider this when choosing it.",
+						Name:        "Reth",
+						Description: "Reth is a new Ethereum full node implementation that is focused on being user-friendly, highly modular, as well as being fast and efficient. Reth is fully open source and written in Rust.",
 					},
 					Value: ExecutionClient_Reth,
 				}},
