@@ -83,6 +83,18 @@ func ValidateAddress(name, value string) (common.Address, error) {
 	return common.HexToAddress(value), nil
 }
 
+// Validate an EIP-712 signature
+func ValidateSignature(name, signature string) (string, error) {
+	if len(signature) != 132 || signature[:2] != "0x" {
+		return "", fmt.Errorf("Invalid  %s, '%s'\n", name, signature)
+	}
+	signatureTruncated := signature[2:]
+	if !regexp.MustCompile("^[A-Fa-f0-9]+$").MatchString(signatureTruncated) {
+		return "", fmt.Errorf("Invalid  %s, '%s'\n", name, signature)
+	}
+	return signature, nil
+}
+
 // Validate a wei amount
 func ValidateWeiAmount(name, value string) (*big.Int, error) {
 	val := new(big.Int)
