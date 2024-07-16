@@ -84,13 +84,19 @@ func ValidateAddress(name, value string) (common.Address, error) {
 }
 
 // Validate an EIP-712 signature
-func ValidateSignature(name, signature string) (string, error) {
-	if len(signature) != 132 || signature[:2] != "0x" {
-		return "", fmt.Errorf("Invalid  %s, '%s'\n", name, signature)
+func ValidateEip712Signature(name, value string) ([]byte, error) {
+	// Remove a 0x prefix if present
+	value = strings.TrimPrefix(value, "0x")
+
+	// Try to parse the string
+	signature, err := hex.DecodeString(value)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid %s '%s': %w", name, value, err)
 	}
-	signatureTruncated := signature[2:]
-	if !regexp.MustCompile("^[A-Fa-f0-9]+$").MatchString(signatureTruncated) {
-		return "", fmt.Errorf("Invalid  %s, '%s'\n", name, signature)
+
+	// Signature should be 65 bytes long - see https://github.com/ethereum/EIPs/pull/8722
+	if len(signature) != 65 {
+		return nil, fmt.Errorf("Invalid %s '%s': it must have 65 bytes", name, value)
 	}
 	return signature, nil
 }
